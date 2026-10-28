@@ -1,0 +1,41 @@
+plugins { id 'com.android.application' }
+
+def appHost = System.getenv('SCHAT_HOST') ?: 'chat.satingraphic.ca'
+def verCode = (System.getenv('GITHUB_RUN_NUMBER') ?: '1') as Integer
+
+android {
+    namespace 'ca.satingraphic.schat'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'ca.satingraphic.schat'
+        minSdk 21
+        targetSdk 34
+        versionCode verCode
+        versionName "1.0.${verCode}"
+        manifestPlaceholders = [hostName: appHost, launchUrl: "https://${appHost}/?source=apk"]
+        resValue 'string', 'host_name', appHost
+        resValue 'string', 'asset_statements', """[{ \\"relation\\": [\\"delegate_permission/common.handle_all_urls\\"], \\"target\\": { \\"namespace\\": \\"web\\", \\"site\\": \\"https://${appHost}\\" } }]"""
+    }
+    signingConfigs {
+        release {
+            storeFile file(System.getenv('SCHAT_KEYSTORE') ?: 'release.keystore')
+            storePassword System.getenv('SCHAT_KEYSTORE_PASS') ?: 'schat-temp'
+            keyAlias System.getenv('SCHAT_KEY_ALIAS') ?: 'schat'
+            keyPassword System.getenv('SCHAT_KEY_PASS') ?: (System.getenv('SCHAT_KEYSTORE_PASS') ?: 'schat-temp')
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}

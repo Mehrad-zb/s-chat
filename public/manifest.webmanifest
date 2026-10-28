@@ -1,0 +1,20 @@
+{
+  "name": "S-Chat",
+  "short_name": "S-Chat",
+  "description": "پیام‌رسان شخصی S-Chat — چت، گروه، ویس و تماس تصویری",
+  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#9cc9d8",
+  "theme_color": "#9cc9d8",
+  "dir": "rtl",
+  "lang": "fa",
+  "categories": ["social", "communication"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

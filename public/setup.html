@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>S-Chat · تنظیمات سرور</title>
+<link rel="stylesheet" href="/app.css?v=1">
+<style>
+  body{overflow:auto}
+  .wrap{min-height:100%;display:grid;place-items:center;padding:20px}
+  .card{width:min(560px,100%);padding:28px;border-radius:28px;display:grid;gap:14px}
+  h2{margin:8px 0 0;font-size:17px}
+  .row2{display:grid;grid-template-columns:1fr 120px;gap:10px}
+  .ok{color:var(--ok);font-weight:600}
+  .hint{font-size:12.5px;color:var(--mut);line-height:1.7}
+  .test{display:flex;gap:8px}
+  .test .input{flex:1}
+</style>
+</head>
+<body>
+<div class="wrap"><form class="card glass" id="f" autocomplete="off">
+  <div class="brand"><div class="logo">S</div><div><h1>تنظیمات سرور</h1><p>فقط برای مدیر — این لینک را به کسی ندهید</p></div></div>
+  <div class="err" id="msg"></div>
+
+  <h2>📧 ایمیل (ارسال کد ورود)</h2>
+  <div class="hint">ایمیل HostPapa: هاست <b dir="ltr">mail.satingraphic.ca</b> پورت <b>465</b> — یا Gmail: هاست <b dir="ltr">smtp.gmail.com</b> پورت 465 با App Password</div>
+  <div class="row2"><input class="input" name="SMTP_HOST" placeholder="SMTP host" dir="ltr"><input class="input" name="SMTP_PORT" placeholder="465" dir="ltr"></div>
+  <input class="input" name="SMTP_USER" placeholder="Email / username" dir="ltr">
+  <input class="input" name="SMTP_PASS" type="password" placeholder="Password" dir="ltr">
+  <input class="input" name="SMTP_FROM" placeholder="S-Chat <noreply@satingraphic.ca>" dir="ltr">
+  <div class="test"><input class="input" id="tEmail" placeholder="ایمیل برای تست" dir="ltr"><button type="button" class="btn ghost" id="bEmail">ارسال تست</button></div>
+
+  <h2>💬 پیامک VoIP.ms (اختیاری — فقط شماره‌های کانادا/آمریکا)</h2>
+  <div class="hint">در پنل VoIP.ms: Main Menu ← SOAP and REST/JSON API ← API را فعال کنید، API Password بسازید و IP این سرور را مجاز کنید.</div>
+  <input class="input" name="VOIPMS_USER" placeholder="VoIP.ms account email" dir="ltr">
+  <input class="input" name="VOIPMS_API_PASS" type="password" placeholder="API password" dir="ltr">
+  <input class="input" name="VOIPMS_DID" placeholder="9056959147" dir="ltr">
+  <div class="test"><input class="input" id="tSms" placeholder="شماره برای تست" dir="ltr"><button type="button" class="btn ghost" id="bSms">ارسال تست</button></div>
+
+  <button class="btn block">ذخیره</button>
+  <a href="/" class="btn ghost block" style="text-decoration:none">رفتن به S-Chat</a>
+</form></div>
+<script>
+const tok = location.hash.slice(1);
+const H = { 'Content-Type': 'application/json', 'X-Setup-Token': tok };
+const msg = (t, ok) => { const m = document.getElementById('msg'); m.textContent = t; m.className = ok ? 'ok' : 'err'; };
+const f = document.getElementById('f');
+fetch('/api/setup', { headers: H }).then((r) => r.json()).then((j) => {
+  if (!j.settings) { msg('لینک تنظیمات نامعتبر است'); return; }
+  for (const [k, v] of Object.entries(j.settings)) if (f.elements[k]) f.elements[k].value = v;
+});
+f.onsubmit = async (e) => {
+  e.preventDefault();
+  const body = Object.fromEntries(new FormData(f));
+  const r = await fetch('/api/setup', { method: 'POST', headers: H, body: JSON.stringify(body) });
+  msg(r.ok ? '✓ ذخیره شد' : 'خطا در ذخیره', r.ok);
+};
+async function test(kind, to) {
+  await f.onsubmit(new Event('submit'));
+  msg('در حال ارسال…', true);
+  const r = await fetch('/api/setup/test', { method: 'POST', headers: H, body: JSON.stringify({ kind, to }) }).then((x) => x.json()).catch(() => ({}));
+  msg(r.ok ? '✓ ارسال شد — صندوق را چک کنید' : 'ارسال نشد: ' + (r.error || ''), r.ok);
+}
+document.getElementById('bEmail').onclick = () => test('email', document.getElementById('tEmail').value);
+document.getElementById('bSms').onclick = () => test('sms', document.getElementById('tSms').value);
+</script>
+</body>
+</html>

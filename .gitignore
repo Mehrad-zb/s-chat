@@ -1,0 +1,6 @@
+.env
+data/
+node_modules/
+*.keystore
+*.jks
+public/fonts/
