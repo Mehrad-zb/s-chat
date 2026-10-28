@@ -1,6 +1,6 @@
 /* S-Chat service worker — offline shell, media cache, push notifications */
-const VERSION = 'sc-v2';
-const SHELL = ['/', '/app.css?v=2', '/js/i18n.js?v=2', '/js/core.js?v=2', '/js/app.js?v=2', '/js/chat.js?v=2', '/js/media.js?v=2', '/js/call.js?v=2', '/js/main.js?v=2',
+const VERSION = 'sc-v3';
+const SHELL = ['/', '/app.css?v=3', '/js/i18n.js?v=3', '/js/core.js?v=3', '/js/app.js?v=3', '/js/chat.js?v=3', '/js/media.js?v=3', '/js/call.js?v=3', '/js/main.js?v=3',
   '/manifest.webmanifest', '/img/bokeh.jpg', '/icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {

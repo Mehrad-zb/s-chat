@@ -315,7 +315,7 @@ const I18N = {
   },
 };
 
-let LANG = 'fa';
+let LANG = 'en';
 try { const saved = localStorage.getItem('sc_lang'); if (saved === 'en' || saved === 'fa') LANG = saved; } catch {}
 
 function t(key, vars) {
