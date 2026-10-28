@@ -31,6 +31,9 @@ jobs:
             changed=1
           done
           [ "$changed" = 1 ] || { echo "nothing to do"; exit 0; }
+          if [ -x deploy/render-icons.sh ] || [ -f deploy/render-icons.sh ]; then
+            sudo apt-get install -y -qq librsvg2-bin >/dev/null && bash deploy/render-icons.sh
+          fi
           chmod +x deploy/*.sh
           git add -A
           git commit -m "Apply uploaded update"
