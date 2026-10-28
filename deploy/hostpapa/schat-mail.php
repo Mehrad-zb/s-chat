@@ -3,7 +3,7 @@
 // emails here over HTTPS because cloud servers often can't use SMTP ports.
 // Set the same secret as MAIL_RELAY_TOKEN in S-Chat's settings.
 $TOKEN = '__TOKEN__';
-$FROM  = 'S-Chat <noreply@satingraphic.ca>';
+$FROM  = 'Connection by Satingraphic <noreply@satingraphic.ca>';
 
 header('Content-Type: application/json');
 $in = json_decode(file_get_contents('php://input'), true);

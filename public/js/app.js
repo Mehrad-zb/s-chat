@@ -32,7 +32,7 @@ const App = {
         <button class="chip ${LANG === 'en' ? 'on' : ''}" data-l="en">English</button>
       </div>
       <div class="auth"><form class="auth-card glass" id="authForm" novalidate>
-        <div class="brand"><div class="logo">S</div><div><h1>S-Chat</h1><p>${t('app_tag')}</p></div></div>
+        <div class="brand"><div class="logo">C</div><div><h1>Connection</h1><span class="by">by Satingraphic</span><p>${t('app_tag')}</p></div></div>
         <div id="authStep"></div>
       </form></div>`;
     $$('.auth-top .chip').forEach((b) => b.onclick = () => { setLang(b.dataset.l); this.showAuth(); });
@@ -147,8 +147,8 @@ const App = {
     const root = $('#root');
     root.innerHTML = `
       <div class="app" id="app">
-        <nav class="rail glass" aria-label="S-Chat">
-          <div class="logo">S</div>
+        <nav class="rail glass" aria-label="Connection">
+          <div class="logo" title="Connection by Satingraphic">C</div>
           <button class="ibtn" data-tab="chats" title="${t('chats')}">${icon('chat')}<span class="badge" id="railBadge" hidden></span></button>
           <button class="ibtn" data-tab="calls" title="${t('calls')}">${icon('phone')}</button>
           <button class="ibtn" data-tab="settings" title="${t('settings')}">${icon('settings')}</button>
@@ -160,11 +160,15 @@ const App = {
         <nav class="bnav glass">
           <button data-tab="chats">${icon('chat')}<span>${t('chats')}</span><span class="badge" id="bnavBadge" hidden></span></button>
           <button data-tab="calls">${icon('phone')}<span>${t('calls')}</span></button>
+          <button class="bfab" id="bFab" title="${t('new_chat')}">${icon('chat')}</button>
+          <button id="bSaved">${icon('bookmark')}<span>${t('saved_short')}</span></button>
           <button data-tab="settings">${icon('settings')}<span>${t('settings')}</span></button>
         </nav>
       </div>`;
     $$('[data-tab]').forEach((b) => b.onclick = () => this.setTab(b.dataset.tab));
     $('#railMe').onclick = () => this.setTab('settings');
+    $('#bFab').onclick = (e) => Modals.newMenu(e.currentTarget);
+    $('#bSaved').onclick = () => App.openDirect(S.me);
     this.renderRailMe();
     Chat.renderEmpty();
     this.setTab(S.tab);
@@ -216,7 +220,7 @@ const App = {
       const el = $('#' + id); if (!el) continue;
       el.hidden = !n; el.textContent = n > 99 ? '99+' : fmt.num(n);
     }
-    document.title = (n ? `(${n}) ` : '') + 'S-Chat';
+    document.title = (n ? `(${n}) ` : '') + 'Connection';
     if (navigator.setAppBadge) { try { n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } catch {} }
   },
 
@@ -250,7 +254,7 @@ const App = {
     if (!$('#chatList', panel)) {
       const hasArchived = [...S.chats.values()].some((c) => c.archived);
       panel.innerHTML = `
-        <div class="ph"><h2>${t('chats')}</h2>
+        <div class="ph"><div class="brandline"><h2>Connection</h2><small>by Satingraphic</small></div>
           <button class="ibtn" id="newBtnTop" title="${t('new_chat')}">${icon('edit')}</button></div>
         <div class="search">${icon('search')}<input class="input" id="q" type="search" placeholder="${t('search_ph')}" value="${esc(S.query)}" autocomplete="off"></div>
         <div class="filters" id="filters">
@@ -294,7 +298,12 @@ const App = {
   renderRows() {
     const box = $('#chatList'); if (!box) return;
     const list = this.sortedChats();
-    let html = list.map((c) => this.rowHtml(c)).join('');
+    const favs = !S.query && S.filter === 'all' ? list.filter((c) => c.pinned) : [];
+    let html = favs.length ? `<div class="favs-t">${t('favorites')}</div><div class="favs">${favs.map((c) => {
+      const peer = c.type === 'direct' ? S.users.get(c.peer.id) : null;
+      return `<button class="fav" data-id="${c.id}">${avatar(chatAvatarObj(c), '', peer && peer.online && !isSaved(c))}<span><b>${esc(chatTitle(c))}</b><small>${c.unread ? fmt.num(c.unread) + ' ' + t('unread') : c.type === 'group' ? fmt.num(c.member_count) + ' ' + t('members') : esc(fmt.lastSeen(peer))}</small></span></button>`;
+    }).join('')}</div>` : '';
+    html += list.map((c) => this.rowHtml(c)).join('');
     if (!list.length && !S.query) {
       html = `<div class="empty"><div class="big">${icon('chat')}</div><b>${t('no_chats')}</b><span class="small">${t('no_chats_hint')}</span>
         <button class="btn" id="emptyNew">${icon('plus')} ${t('new_chat')}</button></div>`;
@@ -302,7 +311,7 @@ const App = {
     if (S.query.trim().length >= 2) html += `<div id="peopleRes"></div>`;
     box.innerHTML = html;
     if ($('#emptyNew')) $('#emptyNew').onclick = () => Modals.findPeople();
-    box.onclick = (e) => { const r = e.target.closest('.row[data-id]'); if (r) Chat.open(Number(r.dataset.id)); };
+    box.onclick = (e) => { const r = e.target.closest('.row[data-id], .fav[data-id]'); if (r) Chat.open(Number(r.dataset.id)); };
     box.oncontextmenu = (e) => { const r = e.target.closest('.row[data-id]'); if (r) { e.preventDefault(); this.rowMenu(Number(r.dataset.id), e); } };
     longPress(box, '.row[data-id]', (r, ev) => this.rowMenu(Number(r.dataset.id), ev));
     if (this._people) this.renderPeople(this._people);
@@ -360,15 +369,17 @@ const App = {
 function deviceName() {
   const ua = navigator.userAgent;
   const os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iOS' : /Windows/i.test(ua) ? 'Windows' : /Mac/i.test(ua) ? 'macOS' : /Linux/i.test(ua) ? 'Linux' : '';
-  const br = /SChatAndroid/.test(ua) ? 'S-Chat app' : /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+  const br = /SChatAndroid/.test(ua) ? 'Connection app' : /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
   return `${br}${os ? ' · ' + os : ''}`;
 }
 
 function applyTheme() {
-  let th = 'auto'; try { th = localStorage.getItem('sc_theme') || 'auto'; } catch {}
+  let th = 'auto', skin = 'fresh';
+  try { th = localStorage.getItem('sc_theme') || 'auto'; skin = localStorage.getItem('sc_skin') || 'fresh'; } catch {}
   if (th === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = th;
+  if (skin === 'glass') document.documentElement.dataset.skin = 'glass'; else delete document.documentElement.dataset.skin;
   const dark = th === 'dark' || (th === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-  const meta = $('meta[name=theme-color]'); if (meta) meta.content = dark ? '#0e1a22' : '#9cc9d8';
+  const meta = $('meta[name=theme-color]'); if (meta) meta.content = skin === 'glass' ? (dark ? '#0e1a22' : '#9cc9d8') : (dark ? '#111513' : '#f3f4f2');
 }
 
 // long-press helper for touch devices
@@ -622,7 +633,7 @@ const Settings = {
   async render() {
     const panel = $('#listPanel'); if (!panel || S.tab !== 'settings') return;
     const me = S.me;
-    let th = 'auto'; try { th = localStorage.getItem('sc_theme') || 'auto'; } catch {}
+    let th = 'auto', skin = 'fresh'; try { th = localStorage.getItem('sc_theme') || 'auto'; skin = localStorage.getItem('sc_skin') || 'fresh'; } catch {}
     panel.innerHTML = `
       <div class="ph"><h2>${t('settings')}</h2></div>
       <div class="scroll" style="padding-bottom:20px">
@@ -653,6 +664,8 @@ const Settings = {
         <div class="sec"><h4>${t('appearance')}</h4>
           <div class="li">${icon('moon')}<span class="k">${t('theme')}</span>
             <span style="display:flex;gap:4px">${['auto', 'light', 'dark'].map((x) => `<button class="chip ${th === x ? 'on' : ''}" data-th="${x}">${t('theme_' + x)}</button>`).join('')}</span></div>
+          <div class="li">${icon('app')}<span class="k">${t('skin')}</span>
+            <span style="display:flex;gap:4px">${['fresh', 'glass'].map((x) => `<button class="chip ${skin === x ? 'on' : ''}" data-skin="${x}">${t('skin_' + x)}</button>`).join('')}</span></div>
           <div class="li">${icon('globe')}<span class="k">${t('language')}</span>
             <span style="display:flex;gap:4px"><button class="chip ${LANG === 'fa' ? 'on' : ''}" data-lg="fa">فارسی</button><button class="chip ${LANG === 'en' ? 'on' : ''}" data-lg="en">English</button></span></div>
         </div>
@@ -662,7 +675,7 @@ const Settings = {
         </div>
         <div class="sec"><h4>${t('devices')}</h4><div id="sSess"><div class="li"><span class="spinner"></span></div></div></div>
         <div class="sec"><button class="li danger" id="sOut">${icon('logout')}<span class="k">${t('logout')}</span></button></div>
-        <div class="mut small" style="text-align:center;padding:10px">S-Chat · ${t('version')} 1.0</div>
+        <div class="mut small" style="text-align:center;padding:10px">Connection by Satingraphic · ${t('version')} 1.1</div>
       </div>`;
     $('#sAv').onchange = async (e) => {
       const f = e.target.files[0]; if (!f) return;
@@ -682,6 +695,7 @@ const Settings = {
       tb.onclick = async () => { await Push.subscribe(); API.post('/api/push/test').catch(() => {}); };
       nb.after(tb);
     }
+    $$('button[data-skin]').forEach((b) => b.onclick = () => { try { localStorage.setItem('sc_skin', b.dataset.skin); } catch {} applyTheme(); this.render(); });
     $$('[data-th]').forEach((b) => b.onclick = () => { try { localStorage.setItem('sc_theme', b.dataset.th); } catch {} applyTheme(); this.render(); });
     $$('[data-lg]').forEach((b) => b.onclick = () => { setLang(b.dataset.lg); App.start(); App.setTab('settings'); });
     $('#sInstall').onclick = () => Install.prompt();

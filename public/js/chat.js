@@ -12,7 +12,7 @@ const Chat = {
 
   renderEmpty() {
     const p = $('#chatPanel'); if (!p) return;
-    p.innerHTML = `<div class="empty"><div class="big">${icon('chat')}</div><b>S-Chat</b><span class="small">${t('no_chats_hint')}</span></div>`;
+    p.innerHTML = `<div class="empty"><div class="big">${icon('chat')}</div><b>Connection</b><span class="small" style="margin-top:-8px">by Satingraphic</span><span class="small">${t('no_chats_hint')}</span></div>`;
     this.els = null;
   },
 
@@ -107,10 +107,10 @@ const Chat = {
     let map = S.typing.get(chatId);
     if (!map) { map = new Map(); S.typing.set(chatId, map); }
     if (action === 'stop') map.delete(uid); else map.set(uid, { until: Date.now() + 5500, action });
-    if (chatId === S.cur) this.renderHeader();
+    if (chatId === S.cur) { const nb = this.nearBottom(160); this.renderHeader(); this.renderMsgs(); if (nb) this.scrollBottom(); }
     App.renderRows();
     clearTimeout(this._tt);
-    this._tt = setTimeout(() => { if (S.cur) this.renderHeader(); App.renderRows(); }, 5600);
+    this._tt = setTimeout(() => { if (S.cur) { this.renderHeader(); this.renderMsgs(); } App.renderRows(); }, 5600);
   },
 
   async loadMembers(id) {
@@ -230,6 +230,12 @@ const Chat = {
       prev = m;
     }
     for (const k of [...this.cache.keys()]) if (!used.has(k)) this.cache.delete(k);
+    const tmap = S.typing.get(S.cur);
+    const typer = tmap && [...tmap.entries()].find(([, v]) => v.until > Date.now());
+    if (typer) {
+      const tu = S.users.get(typer[0]) || { id: typer[0], name: '' };
+      nodes.push(h(`<div class="typing-bubble">${avatar(tu, 'sm')}<div class="b"><span class="typing-dots"><i></i><i></i><i></i></span></div></div>`));
+    }
     box.replaceChildren(...nodes);
   },
 

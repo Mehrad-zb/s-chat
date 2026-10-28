@@ -1,6 +1,6 @@
 /* S-Chat service worker — offline shell, media cache, push notifications */
-const VERSION = 'sc-v1';
-const SHELL = ['/', '/app.css?v=1', '/js/i18n.js?v=1', '/js/core.js?v=1', '/js/app.js?v=1', '/js/chat.js?v=1', '/js/media.js?v=1', '/js/call.js?v=1', '/js/main.js?v=1',
+const VERSION = 'sc-v2';
+const SHELL = ['/', '/app.css?v=2', '/js/i18n.js?v=2', '/js/core.js?v=2', '/js/app.js?v=2', '/js/chat.js?v=2', '/js/media.js?v=2', '/js/call.js?v=2', '/js/main.js?v=2',
   '/manifest.webmanifest', '/img/bokeh.jpg', '/icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {
@@ -44,7 +44,7 @@ self.addEventListener('fetch', (e) => {
 
 self.addEventListener('push', (e) => {
   let d = {};
-  try { d = e.data ? e.data.json() : {}; } catch { d = { title: 'S-Chat', body: e.data && e.data.text() }; }
+  try { d = e.data ? e.data.json() : {}; } catch { d = { title: 'Connection', body: e.data && e.data.text() }; }
   e.waitUntil((async () => {
     const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     const visible = wins.some((w) => w.visibilityState === 'visible' && w.focused);
@@ -54,7 +54,7 @@ self.addEventListener('push', (e) => {
       old.forEach((n) => n.close());
     }
     const isCall = d.type === 'call';
-    await self.registration.showNotification(d.title || 'S-Chat', {
+    await self.registration.showNotification(d.title || 'Connection', {
       body: d.body || '',
       icon: d.icon || '/icons/icon-192.png',
       badge: '/icons/badge-96.png',
