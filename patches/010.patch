@@ -1,15 +1,3 @@
-diff --git a/.github/workflows/android.yml b/.github/workflows/android.yml
-index 5dd434e..2e50470 100644
---- a/.github/workflows/android.yml
-+++ b/.github/workflows/android.yml
-@@ -61,5 +61,5 @@ jobs:
-           GH_TOKEN: ${{ github.token }}
-         run: |
-           gh release delete apk-latest --yes --cleanup-tag 2>/dev/null || true
--          gh release create apk-latest S-Chat.apk --title "S-Chat Android (build ${{ github.run_number }})" \
--            --notes "Install S-Chat.apk on Android. Built from ${{ github.sha }}." --latest
-+          gh release create apk-latest S-Chat.apk --title "Satin Connect Android (build ${{ github.run_number }})" \
-+            --notes "Install S-Chat.apk on Android (Satin Connect). Built from ${{ github.sha }}." --latest
 diff --git a/android/app/build.gradle b/android/app/build.gradle
 index 660cff8..d4c2a58 100644
 --- a/android/app/build.gradle
