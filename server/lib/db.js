@@ -125,6 +125,11 @@ function open(dataDir) {
 
     CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL);
   `);
+  // migrations
+  const cols = db.prepare('PRAGMA table_info(users)').all().map((c) => c.name);
+  if (!cols.includes('password_hash')) db.exec('ALTER TABLE users ADD COLUMN password_hash TEXT');
+  const scols = db.prepare('PRAGMA table_info(sessions)').all().map((c) => c.name);
+  if (!scols.includes('via_otp')) db.exec('ALTER TABLE sessions ADD COLUMN via_otp INTEGER NOT NULL DEFAULT 0');
   return db;
 }
 

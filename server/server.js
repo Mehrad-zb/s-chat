@@ -139,8 +139,23 @@ function publicUser(u, viewerId) {
 }
 
 function selfUser(u) {
-  return { ...publicUser(u, u.id), phone: u.phone, email: u.email, show_last_seen: !!u.show_last_seen };
+  return { ...publicUser(u, u.id), phone: u.phone, email: u.email, show_last_seen: !!u.show_last_seen, has_password: !!u.password_hash };
 }
+
+// ---------- passwords (scrypt) ----------
+function hashPassword(pw) {
+  const salt = crypto.randomBytes(16);
+  const key = crypto.scryptSync(pw, salt, 32, { N: 16384, r: 8, p: 1 });
+  return `scrypt$${salt.toString('base64')}$${key.toString('base64')}`;
+}
+function checkPassword(pw, stored) {
+  if (!stored || !stored.startsWith('scrypt$')) return false;
+  const [, s, k] = stored.split('$');
+  const key = crypto.scryptSync(String(pw), Buffer.from(s, 'base64'), 32, { N: 16384, r: 8, p: 1 });
+  const want = Buffer.from(k, 'base64');
+  return key.length === want.length && crypto.timingSafeEqual(key, want);
+}
+function validPassword(pw) { return typeof pw === 'string' && pw.length >= 8 && pw.length <= 128; }
 
 const getUser = (id) => q('SELECT * FROM users WHERE id = ?').get(id);
 const memberOf = (chatId, userId) => q('SELECT * FROM members WHERE chat_id = ? AND user_id = ?').get(chatId, userId);
@@ -307,10 +322,10 @@ function checkOtp(target, code) {
   q('DELETE FROM otps WHERE target = ?').run(target.value);
 }
 
-function createSession(userId, device) {
+function createSession(userId, device, viaOtp) {
   const token = crypto.randomBytes(32).toString('base64url');
-  q('INSERT INTO sessions (user_id, token_hash, device, created_at, last_used) VALUES (?, ?, ?, ?, ?)')
-    .run(userId, sha(token), String(device || '').slice(0, 120), now(), now());
+  q('INSERT INTO sessions (user_id, token_hash, device, created_at, last_used, via_otp) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(userId, sha(token), String(device || '').slice(0, 120), now(), now(), viaOtp ? 1 : 0);
   return token;
 }
 
@@ -539,10 +554,39 @@ route('POST', '/api/auth/verify', async ({ req, res, body }) => {
     user = getUser(Number(r.lastInsertRowid));
     isNew = true;
   }
-  const token = createSession(user.id, body.device || req.headers['user-agent']);
+  const token = createSession(user.id, body.device || req.headers['user-agent'], true);
   res.setHeader('Set-Cookie', cookieFor(token, 365 * 86400));
   return { token, user: selfUser(user), is_new: isNew || !user.name };
 }, { auth: false });
+
+// Sign in with username / email / phone + password
+route('POST', '/api/auth/login', async ({ req, res, body }) => {
+  rateLimit('login-ip:' + clientIp(req), 20, 600000);
+  const login = String(body.login || '').trim().replace(/^@/, '').toLowerCase();
+  if (!login || !body.password) fail(400, 'BAD_LOGIN');
+  let user = null;
+  if (login.includes('@')) user = q('SELECT * FROM users WHERE email = ?').get(login);
+  else if (/^[a-z][a-z0-9_]{3,31}$/.test(login)) user = q('SELECT * FROM users WHERE username = ?').get(login);
+  if (!user) { try { const t = normalizeTarget(login); if (t.kind === 'phone') user = q('SELECT * FROM users WHERE phone = ?').get(t.value); } catch {} }
+  if (user) rateLimit('login-user:' + user.id, 10, 900000);
+  if (!user || !checkPassword(body.password, user.password_hash)) fail(401, 'BAD_LOGIN');
+  const token = createSession(user.id, body.device || req.headers['user-agent'], false);
+  res.setHeader('Set-Cookie', cookieFor(token, 365 * 86400));
+  return { token, user: selfUser(user), is_new: !user.name };
+}, { auth: false });
+
+// Set or change password. Changing an existing one needs the current password,
+// unless this session was just opened with an email/SMS code (forgot-password flow).
+route('POST', '/api/me/password', async ({ s, body }) => {
+  const u = getUser(s.user_id);
+  if (!validPassword(body.password)) fail(400, 'BAD_PASSWORD');
+  const fresh = s.via_otp && now() - s.created_at < 30 * 60000;
+  if (u.password_hash && !fresh && !checkPassword(body.current_password || '', u.password_hash)) fail(403, 'WRONG_PASSWORD');
+  q('UPDATE users SET password_hash = ? WHERE id = ?').run(hashPassword(body.password), u.id);
+  // sign out other devices when the password changes
+  if (u.password_hash) q('DELETE FROM sessions WHERE user_id = ? AND id != ?').run(u.id, s.id);
+  return { user: selfUser(getUser(u.id)) };
+});
 
 route('POST', '/api/auth/logout', async ({ s, res }) => {
   q('DELETE FROM sessions WHERE id = ?').run(s.id);

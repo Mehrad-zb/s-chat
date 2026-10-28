@@ -542,3 +542,15 @@ html:not([data-skin="glass"]) .info .hero .av{box-shadow:0 0 0 4px var(--g-bg),0
   html:not([data-skin="glass"]) .ch .back + .who + #cMore{margin-inline-start:auto}
   .sec .li .btn{padding:6px 12px;font-size:12.5px}
 }
+.pw{position:relative}
+.pw .input{padding-inline-end:48px}
+.pw .eye{position:absolute;inset-inline-end:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;color:var(--mut)}
+.auth-links{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--link);font-weight:600;font-size:13.5px;cursor:pointer}
+.linkbtn:hover{text-decoration:underline}
+/* voice recording bar must never push the send button off-screen */
+.cbar{min-width:0;max-width:100%}
+.rec{min-width:0;overflow:hidden}
+.rec .lv{min-width:0;flex:1 1 0;justify-content:flex-end}
+.rec .rt{flex:none}
+.cbar > .ibtn{flex:none}

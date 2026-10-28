@@ -9,7 +9,7 @@ const App = {
     try {
       const { user } = await API.get('/api/me');
       S.me = putUser(user);
-      if (!user.name) return this.showProfileSetup(true);
+      if (!user.name || !user.username || !user.has_password) return this.showProfileSetup(true);
       this.start();
     } catch (e) {
       if (e.code === 'NETWORK') { this.start(true); return; }
@@ -36,19 +36,51 @@ const App = {
         <div id="authStep"></div>
       </form></div>`;
     $$('.auth-top .chip').forEach((b) => b.onclick = () => { setLang(b.dataset.l); this.showAuth(); });
-    this.authTarget(this._lastTarget || '');
+    this.authPassword(this._lastLogin || '');
+  },
+
+  authPassword(prefill) {
+    this._flow = 'login';
+    const box = $('#authStep');
+    box.innerHTML = `
+      <div style="display:grid;gap:14px">
+        <div><h2 style="margin:0 0 4px;font-size:19px">${t('signin_title')}</h2><div class="mut small">${t('signin_hint')}</div></div>
+        <input class="input" id="lg" type="text" autocomplete="username" dir="ltr" autocapitalize="off" spellcheck="false" placeholder="${t('login_user_ph')}" value="${esc(prefill)}">
+        <div class="pw"><input class="input" id="pw" type="password" autocomplete="current-password" dir="ltr" placeholder="${t('password')}"><button type="button" class="ibtn eye" id="eye" aria-label="show">${icon('eye')}</button></div>
+        <div class="err" id="aerr"></div>
+        <button class="btn block" id="go">${t('signin')}</button>
+        <div class="auth-links"><button type="button" class="linkbtn" id="toSignup">${t('create_account')}</button><button type="button" class="linkbtn" id="toForgot">${t('forgot_password')}</button></div>
+      </div>`;
+    const lg = $('#lg'), pw = $('#pw');
+    (prefill ? pw : lg).focus();
+    $('#eye').onclick = () => { pw.type = pw.type === 'password' ? 'text' : 'password'; };
+    $('#toSignup').onclick = () => { this._flow = 'signup'; this.authTarget(''); };
+    $('#toForgot').onclick = () => { this._flow = 'forgot'; this.authTarget(lg.value.includes('@') ? lg.value : ''); };
+    $('#authForm').onsubmit = async (e) => {
+      e.preventDefault();
+      if (!lg.value.trim() || !pw.value) return;
+      const btn = $('#go'); btn.disabled = true; $('#aerr').textContent = '';
+      try {
+        const res = await API.post('/api/auth/login', { login: lg.value, password: pw.value, device: deviceName() });
+        this._lastLogin = lg.value;
+        API.setToken(res.token); S.me = putUser(res.user);
+        if (res.is_new || !res.user.username) this.showProfileSetup(true); else this.start();
+      } catch (err) { $('#aerr').textContent = errText(err.code); btn.disabled = false; pw.select(); }
+    };
   },
 
   authTarget(prefill) {
     const box = $('#authStep');
     box.innerHTML = `
       <div style="display:grid;gap:14px">
-        <div><h2 style="margin:0 0 4px;font-size:19px">${t('login_title')}</h2><div class="mut small">${t('login_hint')}</div></div>
+        <div><h2 style="margin:0 0 4px;font-size:19px">${t(this._flow === 'forgot' ? 'forgot_title' : 'signup_title')}</h2><div class="mut small">${t(this._flow === 'forgot' ? 'forgot_hint' : 'signup_hint')}</div></div>
         <input class="input" id="tgt" type="text" inputmode="email" autocomplete="username" dir="ltr" placeholder="${S.config.sms ? t('login_ph') : t('email')}" value="${esc(prefill)}" required>
         <div class="err" id="aerr"></div>
         <button class="btn block" id="go">${t('send_code')}</button>
+        <div class="auth-links"><button type="button" class="linkbtn" id="toLogin">${t('have_account')}</button></div>
       </div>`;
     const inp = $('#tgt'); inp.focus();
+    $('#toLogin').onclick = () => this.authPassword('');
     $('#authForm').onsubmit = async (e) => {
       e.preventDefault();
       const v = inp.value.trim(); if (!v) return;
@@ -93,7 +125,9 @@ const App = {
         const res = await API.post('/api/auth/verify', { target: r.target, code: c, device: deviceName() });
         API.setToken(res.token);
         S.me = putUser(res.user);
-        if (res.is_new) this.showProfileSetup(true); else this.start();
+        if (res.is_new || !res.user.username) this.showProfileSetup(true);
+        else if (this._flow === 'forgot' || !res.user.has_password) this.showSetPassword();
+        else this.start();
       } catch (err) { $('#aerr').textContent = errText(err.code); $('#go').disabled = false; code.select(); }
     };
     code.oninput = () => { if (code.value.replace(/\D/g, '').length + (code.value.match(/[۰-۹]/g) || []).length >= 6) submit(); };
@@ -115,7 +149,8 @@ const App = {
           <div class="mut small">${t('profile_hint')}</div>
         </div>
         <label class="f">${t('name')}<input class="input" id="pfName" maxlength="64" placeholder="${t('name_ph')}" value="${esc(me.name)}" autocomplete="name"></label>
-        <label class="f">${t('username')}<input class="input" id="pfUser" dir="ltr" maxlength="32" placeholder="@username" value="${esc(me.username || '')}" autocapitalize="off" spellcheck="false"><span class="mut small" style="font-weight:400">${t('username_hint')}</span></label>
+        <label class="f">${t('username')}<input class="input" id="pfUser" dir="ltr" maxlength="32" placeholder="@username" value="${esc(me.username || '')}" autocapitalize="off" spellcheck="false" autocomplete="username"><span class="mut small" style="font-weight:400">${t('username_hint_req')}</span></label>
+        ${me.has_password ? '' : `<label class="f">${t('password')}<div class="pw"><input class="input" id="pfPw" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('password_ph')}"><button type="button" class="ibtn eye" id="pfEye">${icon('eye')}</button></div><span class="mut small" style="font-weight:400">${t('password_hint')}</span></label>`}
         <div class="err" id="perr"></div>
         <button class="btn block">${t(first ? 'continue' : 'save')}</button>
       </form></div>`;
@@ -130,15 +165,44 @@ const App = {
       } catch (err) { $('#perr').textContent = errText(err.code); }
     };
     $('#pfName').focus();
+    if ($('#pfEye')) $('#pfEye').onclick = () => { const p = $('#pfPw'); p.type = p.type === 'password' ? 'text' : 'password'; };
     $('#pf').onsubmit = async (e) => {
       e.preventDefault();
-      const body = { name: $('#pfName').value, username: $('#pfUser').value };
+      $('#perr').textContent = '';
+      const uname = $('#pfUser').value.trim();
+      if (!uname) { $('#perr').textContent = errText('USERNAME_REQUIRED'); $('#pfUser').focus(); return; }
+      const pwEl = $('#pfPw');
+      if (pwEl && pwEl.value.length < 8) { $('#perr').textContent = errText('BAD_PASSWORD'); pwEl.focus(); return; }
+      const body = { name: $('#pfName').value, username: uname };
       if (avatarId) body.avatar_file = avatarId;
       try {
         const { user } = await API.patch('/api/me', body);
         S.me = putUser(user);
+        if (pwEl) { const r = await API.post('/api/me/password', { password: pwEl.value }); S.me = putUser(r.user); }
         this.start();
       } catch (err) { $('#perr').textContent = errText(err.code); }
+    };
+  },
+
+  showSetPassword() {
+    const root = $('#root');
+    root.innerHTML = `
+      <div class="auth"><form class="auth-card glass" id="spf" novalidate>
+        <div class="brand"><div class="logo">${LOGO}</div><div><h1>Connection</h1><span class="by">by Satingraphic</span></div></div>
+        <div><h2 style="margin:0 0 4px;font-size:19px">${t('new_password_title')}</h2><div class="mut small">${t('new_password_hint', { u: '@' + (S.me.username || '') })}</div></div>
+        <input type="text" autocomplete="username" value="${esc(S.me.username || '')}" hidden>
+        <div class="pw"><input class="input" id="np" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('password_ph')}"><button type="button" class="ibtn eye" id="npEye">${icon('eye')}</button></div>
+        <div class="err" id="perr"></div>
+        <button class="btn block">${t('save')}</button>
+      </form></div>`;
+    $('#np').focus();
+    $('#npEye').onclick = () => { const p = $('#np'); p.type = p.type === 'password' ? 'text' : 'password'; };
+    $('#spf').onsubmit = async (e) => {
+      e.preventDefault();
+      const v = $('#np').value;
+      if (v.length < 8) { $('#perr').textContent = errText('BAD_PASSWORD'); return; }
+      try { const r = await API.post('/api/me/password', { password: v }); S.me = putUser(r.user); this.start(); }
+      catch (err) { $('#perr').textContent = errText(err.code); }
     };
   },
 
@@ -652,6 +716,7 @@ const Settings = {
         </div>
         <div class="sec"><h4>${t('account')}</h4>
           <button class="li" id="sPhone">${icon('phone')}<span class="k">${t('phone')}<small dir="ltr" style="text-align:start">${esc(me.phone || t('not_set'))}</small></span>${me.phone ? '' : icon('plus')}</button>
+          <button class="li" id="sPass">${icon('lock')}<span class="k">${t('password')}<small>${me.has_password ? '••••••••' : t('not_set')}</small></span>${icon('edit')}</button>
           <button class="li" id="sEmail">${icon('mail')}<span class="k">${t('email')}<small dir="ltr" style="text-align:start">${esc(me.email || t('not_set'))}</small></span>${me.email ? '' : icon('plus')}</button>
         </div>
         <div class="sec"><h4>${t('privacy')}</h4>
@@ -685,6 +750,7 @@ const Settings = {
     $('#sSaved').onclick = () => App.openDirect(S.me);
     $('#sPhone').onclick = () => { if (!me.phone) Modals.linkTarget('phone'); };
     $('#sEmail').onclick = () => { if (!me.email) Modals.linkTarget('email'); };
+    $('#sPass').onclick = () => this.changePassword();
     $('#sSeen').onclick = async () => { try { const { user } = await API.patch('/api/me', { show_last_seen: !me.show_last_seen }); S.me = putUser(user); this.render(); } catch (err) { toast(errText(err.code)); } };
     $('#sSnd').onclick = (e) => { S.sounds = !S.sounds; try { localStorage.setItem('sc_sounds', S.sounds ? '1' : '0'); } catch {} e.currentTarget.classList.toggle('on', S.sounds); };
     const nb = $('#sNotif');
@@ -715,6 +781,25 @@ const Settings = {
         ${s.current ? '' : `<button class="btn ghost" data-sid="${s.id}" style="min-height:34px;padding:4px 12px;font-size:12.5px">${t('terminate')}</button>`}</div>`).join('');
       box.onclick = async (e) => { const b = e.target.closest('[data-sid]'); if (!b) return; await API.del('/api/sessions/' + b.dataset.sid).catch(() => {}); this.loadSessions(); };
     } catch {}
+  },
+
+  changePassword() {
+    const has = S.me.has_password;
+    const m = Modals.open(`<header><h3>${t(has ? 'change_password' : 'set_password')}</h3><button class="ibtn" data-close>${icon('x')}</button></header>
+      <div class="body">
+        ${has ? `<input class="input" id="cpOld" type="password" dir="ltr" autocomplete="current-password" placeholder="${t('current_password')}">` : ''}
+        <input class="input" id="cpNew" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('password_ph')}">
+        <span class="mut small">${t('password_hint')}</span>
+        <div class="err" id="cpE"></div></div>
+      <footer><button class="btn ghost" data-close>${t('cancel')}</button><button class="btn" id="cpGo">${t('save')}</button></footer>`);
+    $('#cpGo', m.el).onclick = async () => {
+      const nv = $('#cpNew', m.el).value;
+      if (nv.length < 8) { $('#cpE', m.el).textContent = errText('BAD_PASSWORD'); return; }
+      try {
+        const r = await API.post('/api/me/password', { password: nv, current_password: has ? $('#cpOld', m.el).value : undefined });
+        S.me = putUser(r.user); m.close(); toast(t('done')); this.render();
+      } catch (err) { $('#cpE', m.el).textContent = errText(err.code); }
+    };
   },
 
   editProfile() {

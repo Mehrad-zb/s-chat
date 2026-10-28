@@ -9,7 +9,23 @@ const Push = {
     const s = this.state();
     return s === 'granted' ? t('notif_on') : s === 'denied' ? t('notif_blocked') : s === 'unsupported' ? t('notif_unsupported') : t('notifications');
   },
-  async init() { if (this.state() === 'granted') this.subscribe(); },
+  async init() {
+    if (this.state() === 'granted') { this.subscribe(); return; }
+    if (this.state() !== 'default') return;
+    let last = 0; try { last = Number(localStorage.getItem('sc_np') || 0); } catch {}
+    if (Date.now() - last < 2 * 86400000) return;
+    setTimeout(() => this.ask(), 1200);
+  },
+  ask() {
+    if (this.state() !== 'default' || document.querySelector('.ov')) return;
+    try { localStorage.setItem('sc_np', String(Date.now())); } catch {}
+    const m = Modals.open(`<div class="body" style="padding-top:26px;justify-items:center;text-align:center">
+        <div class="empty" style="height:auto;padding:0"><div class="big" style="color:var(--accent)">${icon('bell')}</div></div>
+        <h3 style="margin:0;font-size:19px">${t('notif_ask_title')}</h3>
+        <div class="mut">${t('notif_ask_body')}</div></div>
+      <footer><button class="btn ghost" data-close>${t('not_now')}</button><button class="btn" id="npOn">${t('enable_notif')}</button></footer>`, { sheet: false });
+    $('#npOn', m.el).onclick = async () => { m.close(); await this.request(); };
+  },
   async request() {
     if (!this.supported()) { toast(t('notif_unsupported')); return; }
     const p = await Notification.requestPermission();
