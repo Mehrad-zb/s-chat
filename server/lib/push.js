@@ -72,12 +72,18 @@ class Pusher {
     if (r.status === 404 || r.status === 410) {
       this.db.prepare('DELETE FROM push_subs WHERE endpoint = ?').run(sub.endpoint);
     }
+    if (r.status >= 300) {
+      const txt = await r.text().catch(() => '');
+      console.warn('[push]', new URL(sub.endpoint).host, r.status, txt.slice(0, 200));
+    }
     return r.status;
   }
 
   async sendToUser(userId, payload, opts) {
     const subs = this.db.prepare('SELECT * FROM push_subs WHERE user_id = ?').all(userId);
-    await Promise.all(subs.map((s) => this.send(s, payload, opts).catch(() => 0)));
+    return Promise.all(subs.map((s) => this.send(s, payload, opts)
+      .then((status) => ({ host: new URL(s.endpoint).host, status }))
+      .catch((e) => { console.warn('[push]', e.message); return { host: new URL(s.endpoint).host, status: 0 }; })));
   }
 }
 

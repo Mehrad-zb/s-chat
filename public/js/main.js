@@ -170,7 +170,9 @@ window.addEventListener('keydown', (e) => {
   }
 });
 // unlock audio on first interaction (for ringtones)
-window.addEventListener('pointerdown', () => Sound.ensure(), { once: true });
+// keep the audio engine unlocked (iOS suspends it whenever the app goes to the background)
+['pointerdown', 'touchend', 'keydown'].forEach((ev) => window.addEventListener(ev, () => Sound.ensure(), { passive: true }));
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Sound.ctx) Sound.ctx.resume().catch(() => {}); });
 
 // ---------------- service worker ----------------
 if ('serviceWorker' in navigator) {

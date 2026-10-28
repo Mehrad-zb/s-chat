@@ -29,7 +29,7 @@ const APP_NAME = cfg.APP_NAME && !['S-Chat', 'Connection'].includes(cfg.APP_NAME
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const db = open(DATA_DIR);
-const pusher = new Pusher(db, cfg.VAPID_SUBJECT || `mailto:${cfg.SMTP_USER || 'admin@example.com'}`);
+const pusher = new Pusher(db, cfg.VAPID_SUBJECT || `mailto:${cfg.ACME_EMAIL || cfg.SMTP_USER || 'mehrad.tr@gmail.com'}`);
 const now = () => Date.now();
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 const q = (sql) => db.prepare(sql);
@@ -392,7 +392,7 @@ function endCall(callId, reason, byUser) {
   calls.delete(callId);
   if (userCall.get(c.from) === callId) userCall.delete(c.from);
   if (userCall.get(c.to) === callId) userCall.delete(c.to);
-  clearTimeout(c.timer);
+  clearTimeout(c.timer); clearInterval(c.ringTimer);
   const duration = c.startedAt ? Math.round((now() - c.startedAt) / 1000) : 0;
   const status = c.startedAt ? 'ended' : reason === 'reject' ? 'declined' : reason === 'busy' ? 'busy' : reason === 'cancel' ? 'cancelled' : 'missed';
   const evt = { t: 'call:end', call_id: callId, reason, by: byUser || null };
@@ -490,7 +490,14 @@ function onWsMessage(uid, conn, m) {
       call.timer = setTimeout(() => endCall(call.id, 'timeout'), 45000);
       const fromUser = publicUser(getUser(uid), to);
       emitTo(to, { t: 'call:invite', call_id: call.id, chat_id: chat.id, from: fromUser, video: call.video });
-      pusher.sendToUser(to, { type: 'call', chat_id: chat.id, call_id: call.id, title: fromUser.name, body: call.video ? '📹 تماس تصویری…' : '📞 در حال تماس…', icon: fromUser.avatar, tag: 'call-' + call.id }, { ttl: 45, urgency: 'high' }).catch(() => {});
+      const ringPush = () => pusher.sendToUser(to, { type: 'call', chat_id: chat.id, call_id: call.id, title: fromUser.name, body: call.video ? '📹 تماس تصویری… / Video call' : '📞 در حال تماس… / Calling', icon: fromUser.avatar, tag: 'call-' + call.id }, { ttl: 30, urgency: 'high' }).catch(() => {});
+      ringPush();
+      // keep "ringing" the phone (each push re-alerts) until answered / ended
+      let rings = 0;
+      call.ringTimer = setInterval(() => {
+        if (!calls.has(call.id) || call.startedAt || ++rings > 7) return clearInterval(call.ringTimer);
+        ringPush();
+      }, 5000);
       break;
     }
     case 'call:ringing':
@@ -502,7 +509,7 @@ function onWsMessage(uid, conn, m) {
       const peer = c.from === uid ? c.to : c.from;
       if (m.t === 'call:accept') {
         if (c.to !== uid || c.startedAt) return;
-        c.startedAt = now(); clearTimeout(c.timer);
+        c.startedAt = now(); clearTimeout(c.timer); clearInterval(c.ringTimer);
         // tell the callee's other devices to stop ringing
         for (const other of sockets.get(uid) || []) if (other !== conn) other.send({ t: 'call:end', call_id: c.id, reason: 'answered-elsewhere' });
         c.calleeConn = conn;
@@ -651,8 +658,8 @@ route('POST', '/api/push/subscribe', async ({ s, body }) => {
   return { ok: true };
 });
 route('POST', '/api/push/test', async ({ s }) => {
-  await pusher.sendToUser(s.user_id, { type: 'test', title: APP_NAME, body: 'نوتیفیکیشن فعال است ✅', tag: 'test' });
-  return { ok: true };
+  const results = await pusher.sendToUser(s.user_id, { type: 'test', title: APP_NAME, body: 'نوتیفیکیشن فعال است ✅ / Notifications work', tag: 'test' });
+  return { ok: results.some((r) => r.status >= 200 && r.status < 300), results };
 });
 
 route('GET', '/api/turn', async ({ s, req }) => ({ ice: turnServers(s.user_id, req.headers['x-forwarded-host'] || req.headers.host) }));

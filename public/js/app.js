@@ -764,7 +764,15 @@ const Settings = {
     nb.onclick = async () => { await Push.request(); $('#sNotifTxt').textContent = Push.statusText(); nb.hidden = Push.state() === 'granted'; };
     if (Push.state() === 'granted') {
       const tb = h(`<button class="btn ghost" style="min-height:36px;padding:6px 14px;font-size:13px">${t('test_notif')}</button>`);
-      tb.onclick = async () => { await Push.subscribe(); API.post('/api/push/test').catch(() => {}); };
+      tb.onclick = async () => {
+        await Push.subscribe();
+        try {
+          const r = await API.post('/api/push/test');
+          if (!r.results || !r.results.length) toast(t('push_no_sub'));
+          else if (!r.ok) toast(t('push_failed') + ' (' + r.results.map((x) => x.status).join(', ') + ')');
+          else toast(t('push_sent'));
+        } catch { toast(errText('NETWORK')); }
+      };
       nb.after(tb);
     }
     $$('button[data-skin]').forEach((b) => b.onclick = () => { try { localStorage.setItem('sc_skin', b.dataset.skin); } catch {} applyTheme(); this.render(); });

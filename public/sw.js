@@ -1,6 +1,6 @@
 /* S-Chat service worker — offline shell, media cache, push notifications */
-const VERSION = 'sc-v8';
-const SHELL = ['/', '/app.css?v=8', '/js/i18n.js?v=8', '/js/core.js?v=8', '/js/app.js?v=8', '/js/chat.js?v=8', '/js/media.js?v=8', '/js/call.js?v=8', '/js/main.js?v=8',
+const VERSION = 'sc-v9';
+const SHELL = ['/', '/app.css?v=9', '/js/i18n.js?v=9', '/js/core.js?v=9', '/js/app.js?v=9', '/js/chat.js?v=9', '/js/media.js?v=9', '/js/call.js?v=9', '/js/main.js?v=9',
   '/manifest.webmanifest', '/img/bokeh.jpg', '/icons/icon-192.png?v=2'];
 
 self.addEventListener('install', (e) => {
@@ -46,9 +46,8 @@ self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch { d = { title: 'Satin Connect', body: e.data && e.data.text() }; }
   e.waitUntil((async () => {
-    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const visible = wins.some((w) => w.visibilityState === 'visible' && w.focused);
-    if (visible && d.type === 'message') return; // the open app plays its own sound
+    // Always show a notification: iOS/Safari cancels push for sites that receive a push without showing one.
+    // (The server already skips pushes for the chat you are looking at.)
     if (d.type === 'missed-call' && d.tag) {
       const old = await self.registration.getNotifications({ tag: d.tag.replace('call-', 'call-') });
       old.forEach((n) => n.close());
@@ -60,6 +59,7 @@ self.addEventListener('push', (e) => {
       badge: '/icons/badge-96.png?v=2',
       tag: d.tag || 'sc',
       renotify: true,
+      silent: false,
       requireInteraction: isCall,
       vibrate: isCall ? [500, 250, 500, 250, 500, 250, 500] : [120, 60, 120],
       data: { chat_id: d.chat_id, type: d.type, call_id: d.call_id },
