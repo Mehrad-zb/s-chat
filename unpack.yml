@@ -1,0 +1,32 @@
+name: Unpack upload
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  unpack:
+    if: ${{ hashFiles('bootstrap.zip') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract bootstrap.zip into the repo
+        run: |
+          unzip -o bootstrap.zip -d /tmp/src
+          rsync -a /tmp/src/s-chat/ ./ --exclude .github
+          chmod +x deploy/*.sh
+          git rm -q --cached bootstrap.zip; rm -f bootstrap.zip
+          git config user.name "Mehrad"
+          git config user.email "mehrad.tr@gmail.com"
+          git add -A
+          git commit -m "Add S-Chat source"
+          git push
+      - name: Build the Android app
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run android.yml --ref main
