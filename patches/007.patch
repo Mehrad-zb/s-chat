@@ -1,0 +1,351 @@
+diff --git a/android/app/src/main/res/values/strings.xml b/android/app/src/main/res/values/strings.xml
+index 135f218..2678b99 100644
+--- a/android/app/src/main/res/values/strings.xml
++++ b/android/app/src/main/res/values/strings.xml
+@@ -1,4 +1,4 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <string name="app_name">Connection</string>
++    <string name="app_name">Satin Connect</string>
+ </resources>
+diff --git a/deploy/hostpapa/schat-mail.php b/deploy/hostpapa/schat-mail.php
+index a625657..be10c31 100644
+--- a/deploy/hostpapa/schat-mail.php
++++ b/deploy/hostpapa/schat-mail.php
+@@ -3,7 +3,7 @@
+ // emails here over HTTPS because cloud servers often can't use SMTP ports.
+ // Set the same secret as MAIL_RELAY_TOKEN in S-Chat's settings.
+ $TOKEN = '__TOKEN__';
+-$FROM  = 'Connection by Satingraphic <noreply@satingraphic.ca>';
++$FROM  = 'Satin Connect <noreply@satingraphic.ca>';
+ 
+ header('Content-Type: application/json');
+ $in = json_decode(file_get_contents('php://input'), true);
+diff --git a/public/app.css b/public/app.css
+index 87ddda7..151b366 100644
+--- a/public/app.css
++++ b/public/app.css
+@@ -554,3 +554,15 @@ html:not([data-skin="glass"]) .info .hero .av{box-shadow:0 0 0 4px var(--g-bg),0
+ .rec .lv{min-width:0;flex:1 1 0;justify-content:flex-end}
+ .rec .rt{flex:none}
+ .cbar > .ibtn{flex:none}
++
++/* ---------- Satin Connect brand ---------- */
++.logo{background:#fff !important;color:#0b0b0b !important;border-radius:16px !important;box-shadow:0 1px 3px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.04)}
++.logo svg.mk{width:78%;height:auto}
++.rail .logo{border-radius:13px !important}
++svg.wm{display:block;width:100%;height:auto;color:var(--ink,#111)}
++.brand.wmb{display:grid;justify-items:center;gap:10px;text-align:center}
++.brand.wmb svg.wm{width:min(280px,82%)}
++.brand.wmb p{margin:0}
++.ph .brandline svg.wm{height:36px;width:auto;max-width:100%}
++.wm-empty{width:min(230px,70%);margin:2px auto 0}
++.wm-empty svg.wm{color:var(--ink,#111)}
+diff --git a/public/icons/badge.svg b/public/icons/badge.svg
+index c7d56ce..8fbe4a5 100644
+--- a/public/icons/badge.svg
++++ b/public/icons/badge.svg
+@@ -1 +1 @@
+-<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 512 512"><path d="M256 104c-90 0-163 61-163 140 0 42 21 80 55 106l-13 66 66-35c17 5 36 7 55 7 90 0 163-61 163-140S346 104 256 104z" fill="#fff"/></svg>
++<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 512 512"><svg x="16" y="16" width="480" height="480" viewBox="86 337 1089 549"><path fill="#fff" fill-rule="evenodd" d="M104 870 104 876 111 880 767 880 767 878 657 763 646 752 640 749 224 749 220 751ZM819 481 1121 482 1131 480 1169 440 1170 433 1085 346 1080 343 957 343 819 478ZM95 501 90 528 90 557 97 586 107 606 120 624 132 636 152 650 165 656 184 660 575 660 587 663 605 673 777 848 804 868 829 878 853 881 1043 880 1058 871 1164 774 1164 771 1154 770 886 771 863 770 856 768 847 763 838 754 834 746 832 738 832 704 830 693 825 682 718 571 705 562 688 554 675 551 291 551 274 545 264 532 264 516 272 502 290 488 308 482 604 481 624 464 751 343 751 341 301 341 261 347 234 355 210 366 187 380 158 403 140 421 116 453 104 476Z"/><path fill="#fff" d="M933 343 790 343 604 526 604 528 744 529 748 527 932 348Z"/></svg></svg>
+diff --git a/public/icons/icon.svg b/public/icons/icon.svg
+index 3391e98..fb622b6 100644
+--- a/public/icons/icon.svg
++++ b/public/icons/icon.svg
+@@ -1,8 +1 @@
+-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2cc48f"/><stop offset="1" stop-color="#128a61"/></linearGradient></defs>
+-<rect width="512" height="512" rx="112" fill="url(#g)"/>
+-<g transform="translate(256 256) scale(1) translate(-256 -256)">
+-<path d="M256 104c-90 0-163 61-163 140 0 42 21 80 55 106l-13 66 66-35c17 5 36 7 55 7 90 0 163-61 163-140S346 104 256 104z" fill="#fff"/>
+-<path d="M300 196a72 72 0 1 0 0 104" fill="none" stroke="#1aa978" stroke-width="34" stroke-linecap="round" transform="translate(-14 -4)"/>
+-<circle cx="318" cy="244" r="16" fill="#1aa978"/>
+-</g></svg>
++<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#fff"/><svg x="56" y="56" width="400" height="400" viewBox="86 337 1089 549"><path fill="#0b0b0b" fill-rule="evenodd" d="M104 870 104 876 111 880 767 880 767 878 657 763 646 752 640 749 224 749 220 751ZM819 481 1121 482 1131 480 1169 440 1170 433 1085 346 1080 343 957 343 819 478ZM95 501 90 528 90 557 97 586 107 606 120 624 132 636 152 650 165 656 184 660 575 660 587 663 605 673 777 848 804 868 829 878 853 881 1043 880 1058 871 1164 774 1164 771 1154 770 886 771 863 770 856 768 847 763 838 754 834 746 832 738 832 704 830 693 825 682 718 571 705 562 688 554 675 551 291 551 274 545 264 532 264 516 272 502 290 488 308 482 604 481 624 464 751 343 751 341 301 341 261 347 234 355 210 366 187 380 158 403 140 421 116 453 104 476Z"/><path fill="#ff1166" d="M933 343 790 343 604 526 604 528 744 529 748 527 932 348Z"/></svg></svg>
+diff --git a/public/icons/maskable.svg b/public/icons/maskable.svg
+index ae143c0..980b701 100644
+--- a/public/icons/maskable.svg
++++ b/public/icons/maskable.svg
+@@ -1,8 +1 @@
+-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2cc48f"/><stop offset="1" stop-color="#128a61"/></linearGradient></defs>
+-<rect width="512" height="512" rx="0" fill="url(#g)"/>
+-<g transform="translate(256 256) scale(0.74) translate(-256 -256)">
+-<path d="M256 104c-90 0-163 61-163 140 0 42 21 80 55 106l-13 66 66-35c17 5 36 7 55 7 90 0 163-61 163-140S346 104 256 104z" fill="#fff"/>
+-<path d="M300 196a72 72 0 1 0 0 104" fill="none" stroke="#1aa978" stroke-width="34" stroke-linecap="round" transform="translate(-14 -4)"/>
+-<circle cx="318" cy="244" r="16" fill="#1aa978"/>
+-</g></svg>
++<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" fill="#fff"/><svg x="106" y="106" width="300" height="300" viewBox="86 337 1089 549"><path fill="#0b0b0b" fill-rule="evenodd" d="M104 870 104 876 111 880 767 880 767 878 657 763 646 752 640 749 224 749 220 751ZM819 481 1121 482 1131 480 1169 440 1170 433 1085 346 1080 343 957 343 819 478ZM95 501 90 528 90 557 97 586 107 606 120 624 132 636 152 650 165 656 184 660 575 660 587 663 605 673 777 848 804 868 829 878 853 881 1043 880 1058 871 1164 774 1164 771 1154 770 886 771 863 770 856 768 847 763 838 754 834 746 832 738 832 704 830 693 825 682 718 571 705 562 688 554 675 551 291 551 274 545 264 532 264 516 272 502 290 488 308 482 604 481 624 464 751 343 751 341 301 341 261 347 234 355 210 366 187 380 158 403 140 421 116 453 104 476Z"/><path fill="#ff1166" d="M933 343 790 343 604 526 604 528 744 529 748 527 932 348Z"/></svg></svg>
+diff --git a/public/index.html b/public/index.html
+index 99725d6..d8bb9de 100644
+--- a/public/index.html
++++ b/public/index.html
+@@ -3,8 +3,8 @@
+ <head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+-<title>Connection</title>
+-<meta name="description" content="Connection by Satingraphic — پیام‌رسان شخصی">
++<title>Satin Connect</title>
++<meta name="description" content="Satin Connect by Satin graphic — پیام‌رسان شخصی">
+ <meta name="theme-color" content="#f3f4f2">
+ <meta name="mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+@@ -14,16 +14,16 @@
+ <link rel="icon" href="/icons/icon-192.png" type="image/png">
+ <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+ <link rel="preload" href="/fonts/Vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
+-<link rel="stylesheet" href="/app.css?v=6">
++<link rel="stylesheet" href="/app.css?v=7">
+ </head>
+ <body>
+ <div id="root"><div class="auth"><div class="spinner"></div></div></div>
+-<script src="/js/i18n.js?v=6"></script>
+-<script src="/js/core.js?v=6"></script>
+-<script src="/js/app.js?v=6"></script>
+-<script src="/js/chat.js?v=6"></script>
+-<script src="/js/media.js?v=6"></script>
+-<script src="/js/call.js?v=6"></script>
+-<script src="/js/main.js?v=6"></script>
++<script src="/js/i18n.js?v=7"></script>
++<script src="/js/core.js?v=7"></script>
++<script src="/js/app.js?v=7"></script>
++<script src="/js/chat.js?v=7"></script>
++<script src="/js/media.js?v=7"></script>
++<script src="/js/call.js?v=7"></script>
++<script src="/js/main.js?v=7"></script>
+ </body>
+ </html>
+diff --git a/public/js/app.js b/public/js/app.js
+index f3e264c..7b044f6 100644
+--- a/public/js/app.js
++++ b/public/js/app.js
+@@ -32,7 +32,7 @@ const App = {
+         <button class="chip ${LANG === 'en' ? 'on' : ''}" data-l="en">English</button>
+       </div>
+       <div class="auth"><form class="auth-card glass" id="authForm" novalidate>
+-        <div class="brand"><div class="logo">${LOGO}</div><div><h1>Connection</h1><span class="by">by Satingraphic</span><p>${t('app_tag')}</p></div></div>
++        <div class="brand wmb">${WORDMARK}<p>${t('app_tag')}</p></div>
+         <div id="authStep"></div>
+       </form></div>`;
+     $$('.auth-top .chip').forEach((b) => b.onclick = () => { setLang(b.dataset.l); this.showAuth(); });
+@@ -191,7 +191,7 @@ const App = {
+     const root = $('#root');
+     root.innerHTML = `
+       <div class="auth"><form class="auth-card glass" id="spf" novalidate>
+-        <div class="brand"><div class="logo">${LOGO}</div><div><h1>Connection</h1><span class="by">by Satingraphic</span></div></div>
++        <div class="brand wmb">${WORDMARK}</div>
+         <div><h2 style="margin:0 0 4px;font-size:19px">${t('new_password_title')}</h2><div class="mut small">${t('new_password_hint', { u: '@' + (S.me.username || '') })}</div></div>
+         <input type="text" autocomplete="username" value="${esc(S.me.username || '')}" hidden>
+         <div class="pw"><input class="input" id="np" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('password_ph')}"><button type="button" class="ibtn eye" id="npEye">${icon('eye')}</button></div>
+@@ -217,8 +217,8 @@ const App = {
+     const root = $('#root');
+     root.innerHTML = `
+       <div class="app" id="app">
+-        <nav class="rail glass" aria-label="Connection">
+-          <div class="logo" title="Connection by Satingraphic">${LOGO}</div>
++        <nav class="rail glass" aria-label="Satin Connect">
++          <div class="logo" title="Satin Connect by Satin graphic">${LOGO}</div>
+           <button class="ibtn" data-tab="chats" title="${t('chats')}">${icon('chat')}<span class="badge" id="railBadge" hidden></span></button>
+           <button class="ibtn" data-tab="calls" title="${t('calls')}">${icon('phone')}</button>
+           <button class="ibtn" data-tab="settings" title="${t('settings')}">${icon('settings')}</button>
+@@ -290,7 +290,7 @@ const App = {
+       const el = $('#' + id); if (!el) continue;
+       el.hidden = !n; el.textContent = n > 99 ? '99+' : fmt.num(n);
+     }
+-    document.title = (n ? `(${n}) ` : '') + 'Connection';
++    document.title = (n ? `(${n}) ` : '') + 'Satin Connect';
+     if (navigator.setAppBadge) { try { n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } catch {} }
+   },
+ 
+@@ -324,7 +324,7 @@ const App = {
+     if (!$('#chatList', panel)) {
+       const hasArchived = [...S.chats.values()].some((c) => c.archived);
+       panel.innerHTML = `
+-        <div class="ph"><div class="brandline"><h2>Connection</h2><small>by Satingraphic</small></div>
++        <div class="ph"><div class="brandline" aria-label="Satin Connect">${WORDMARK}</div>
+           <button class="ibtn" id="newBtnTop" title="${t('new_chat')}">${icon('edit')}</button></div>
+         <div class="search">${icon('search')}<input class="input" id="q" type="search" placeholder="${t('search_ph')}" value="${esc(S.query)}" autocomplete="off"></div>
+         <div class="filters" id="filters">
+@@ -439,7 +439,7 @@ const App = {
+ function deviceName() {
+   const ua = navigator.userAgent;
+   const os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iOS' : /Windows/i.test(ua) ? 'Windows' : /Mac/i.test(ua) ? 'macOS' : /Linux/i.test(ua) ? 'Linux' : '';
+-  const br = /SChatAndroid/.test(ua) ? 'Connection app' : /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
++  const br = /SChatAndroid/.test(ua) ? 'Satin Connect app' : /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+   return `${br}${os ? ' · ' + os : ''}`;
+ }
+ 
+@@ -746,7 +746,7 @@ const Settings = {
+         </div>
+         <div class="sec"><h4>${t('devices')}</h4><div id="sSess"><div class="li"><span class="spinner"></span></div></div></div>
+         <div class="sec"><button class="li danger" id="sOut">${icon('logout')}<span class="k">${t('logout')}</span></button></div>
+-        <div class="mut small" style="text-align:center;padding:10px">Connection by Satingraphic · ${t('version')} 1.1</div>
++        <div class="mut small" style="text-align:center;padding:10px">Satin Connect by Satin graphic · ${t('version')} 1.1</div>
+       </div>`;
+     $('#sAv').onchange = async (e) => {
+       const f = e.target.files[0]; if (!f) return;
+diff --git a/public/js/chat.js b/public/js/chat.js
+index 9f3235e..3948b5c 100644
+--- a/public/js/chat.js
++++ b/public/js/chat.js
+@@ -12,7 +12,7 @@ const Chat = {
+ 
+   renderEmpty() {
+     const p = $('#chatPanel'); if (!p) return;
+-    p.innerHTML = `<div class="empty"><div class="big">${icon('chat')}</div><b>Connection</b><span class="small" style="margin-top:-8px">by Satingraphic</span><span class="small">${t('no_chats_hint')}</span></div>`;
++    p.innerHTML = `<div class="empty"><div class="big">${icon('chat')}</div><div class="wm-empty">${WORDMARK}</div><span class="small">${t('no_chats_hint')}</span></div>`;
+     this.els = null;
+   },
+ 
+diff --git a/public/js/core.js b/public/js/core.js
+index a3827ea..7920b62 100644
+--- a/public/js/core.js
++++ b/public/js/core.js
+@@ -64,7 +64,8 @@ const IC = {
+   eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+   speaker: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',
+ };
+-const LOGO = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M40.5 22.5a13 13 0 1 0 0 19" fill="none" stroke="currentColor" stroke-width="6.5" stroke-linecap="round"/><circle cx="43.5" cy="32" r="3.4" fill="currentColor"/></svg>';
++const LOGO = '<svg class="mk" aria-hidden="true" viewBox="86 337 1089 549"><path fill="currentColor" fill-rule="evenodd" d="M104 870 104 876 111 880 767 880 767 878 657 763 646 752 640 749 224 749 220 751ZM819 481 1121 482 1131 480 1169 440 1170 433 1085 346 1080 343 957 343 819 478ZM95 501 90 528 90 557 97 586 107 606 120 624 132 636 152 650 165 656 184 660 575 660 587 663 605 673 777 848 804 868 829 878 853 881 1043 880 1058 871 1164 774 1164 771 1154 770 886 771 863 770 856 768 847 763 838 754 834 746 832 738 832 704 830 693 825 682 718 571 705 562 688 554 675 551 291 551 274 545 264 532 264 516 272 502 290 488 308 482 604 481 624 464 751 343 751 341 301 341 261 347 234 355 210 366 187 380 158 403 140 421 116 453 104 476Z"/><path fill="#ff1166" d="M933 343 790 343 604 526 604 528 744 529 748 527 932 348Z"/></svg>';
++const WORDMARK = '<svg class="wm" aria-hidden="true" viewBox="67 204 2036 357"><path fill="currentColor" fill-rule="evenodd" d="M1018 498 1018 538 1030 539 1031 498ZM691 498 691 539 701 539 704 538 704 498ZM1052 497 1046 500 1038 509 1038 527 1041 532 1049 538 1068 538 1074 534 1077 530 1077 527 1070 524 1066 524 1059 528 1055 527 1051 524 1049 517 1051 512 1055 509 1062 509 1066 513 1068 513 1076 509 1076 505 1071 500 1065 497ZM952 498 938 497 932 501 931 498 919 498 919 555 932 554 933 536 938 539 949 539 954 537 961 530 964 523 964 513 959 503ZM941 508 946 509 951 515 951 521 949 524 942 528 936 526 932 521 933 513 937 509ZM870 504 866 512 866 523 870 532 873 535 881 539 891 539 897 536 899 537 899 539 911 539 911 498 899 497 899 499 897 500 891 497 881 497ZM888 508 894 510 898 515 897 523 889 528 882 526 879 522 880 513ZM863 497 854 497 848 501 847 498 844 497 835 497 835 539 848 538 848 515 854 509 863 509ZM827 497 816 497 814 500 808 497 797 497 792 499 785 506 782 514 782 521 785 529 791 535 799 538 807 538 813 535 814 536 813 541 807 545 800 545 794 541 790 541 785 546 785 548 788 551 797 555 812 555 819 552 825 546 827 541ZM803 508 809 509 815 517 813 523 807 527 800 526 795 519 796 513ZM711 498 711 538 724 539 724 514 729 509 736 509 740 515 740 539 752 539 752 509 750 504 741 497 731 497 725 501 723 500 723 498ZM608 504 604 512 604 524 606 529 612 536 618 539 629 539 635 536 637 539 649 538 648 497 637 497 635 500 629 497 618 497ZM622 509 629 509 635 514 636 521 631 527 624 528 618 524 616 516ZM528 498 516 497 505 520 495 497 482 498 498 536 498 539 495 543 485 544 485 555 499 555 506 550 514 534ZM659 485 659 496 657 498 654 498 654 508 657 508 659 510 660 530 668 538 681 539 683 538 683 528 678 528 673 525 672 510 677 508 683 508 683 498 672 496 671 485ZM970 480 970 538 982 538 982 516 986 510 994 509 998 514 998 538 1010 539 1011 511 1007 502 999 497 989 497 984 500 982 494 982 480ZM429 480 429 538 460 539 471 536 477 530 479 523 477 514 471 508 474 505 477 498 475 488 469 482 464 480ZM442 516 444 514 462 515 465 519 465 523 460 527 443 527ZM463 496 462 500 459 503 442 502 443 492 456 491 460 492ZM1022 479 1018 483 1018 489 1021 492 1026 493 1031 489 1031 483 1026 479ZM694 479 690 485 692 491 695 493 703 491 703 481 700 479ZM572 479 562 483 558 487 555 493 555 502 557 506 565 513 580 516 584 518 586 522 581 527 572 527 563 522 559 522 554 528 554 531 557 534 568 539 584 539 593 535 596 532 599 526 599 516 596 511 586 505 572 502 568 498 568 496 570 493 575 491 580 491 588 495 592 495 597 489 597 486 587 480ZM842 323 841 456 885 456 885 323ZM1702 332 1685 323 1677 321 1659 321 1643 327 1632 337 1631 323 1587 323 1587 457 1631 456 1632 381 1635 374 1640 369 1650 365 1662 367 1670 374 1673 380 1673 456 1720 457 1719 360 1712 343ZM1556 331 1537 322 1514 321 1500 326 1488 337 1487 323 1441 323 1442 457 1487 456 1487 383 1490 375 1497 368 1507 365 1514 366 1522 370 1525 373 1529 382 1529 456 1576 456 1575 362 1570 347ZM1025 341 1010 328 991 321 968 322 957 327 946 336 945 323 900 323 899 456 945 456 945 384 947 377 954 369 965 365 978 368 985 375 987 380 988 456 1035 456 1035 366 1030 349ZM605 343 600 350 593 366 590 380 590 398 595 419 603 433 613 444 632 455 644 458 659 458 669 456 678 452 689 443 691 444 691 456 735 456 735 323 691 323 690 337 683 330 670 323 663 321 642 321 621 329ZM652 366 659 364 667 364 678 368 687 378 689 383 689 396 684 405 677 411 670 414 655 414 647 410 639 401 636 391 638 380 640 376ZM1933 320 1919 324 1903 333 1889 347 1883 357 1878 371 1876 384 1877 401 1880 413 1886 426 1903 445 1919 454 1932 458 1961 458 1974 454 1992 443 2004 429 2007 423 2007 419 1973 401 1970 401 1965 408 1957 413 1938 413 1927 405 1923 397 1923 380 1926 374 1937 365 1944 363 1955 364 1963 368 1969 374 1972 374 2002 357 2004 353 1996 341 1988 333 1975 325 1964 321 1951 319ZM1772 323 1754 333 1742 345 1733 361 1729 376 1728 396 1734 419 1743 434 1753 444 1760 449 1773 455 1791 459 1808 459 1832 453 1847 444 1859 432 1861 427 1829 407 1827 407 1822 413 1815 418 1801 421 1792 420 1784 416 1776 408 1774 403 1867 402 1868 375 1863 357 1855 344 1844 333 1828 324 1807 319 1788 319ZM1774 373 1776 367 1783 359 1794 354 1804 354 1814 358 1821 365 1824 372 1823 374ZM1348 318 1335 321 1321 327 1311 334 1298 348 1292 359 1287 375 1287 400 1291 415 1296 425 1304 436 1318 448 1330 454 1343 458 1373 458 1386 454 1401 446 1415 433 1421 425 1428 410 1430 401 1430 375 1426 361 1418 347 1407 335 1399 329 1378 320 1367 318ZM1351 362 1363 362 1370 365 1378 372 1383 382 1383 395 1379 404 1372 411 1363 415 1352 415 1344 412 1336 405 1331 394 1331 382 1333 376 1342 366ZM762 287 762 320 760 323 746 323 746 364 762 366 762 419 765 430 773 443 777 447 788 453 799 456 829 456 829 414 819 414 814 412 808 406 806 398 807 366 827 364 827 323 808 323 806 321 806 287ZM2027 283 2027 320 2010 321 2010 365 2027 366 2027 417 2031 433 2037 443 2052 454 2068 458 2098 457 2098 415 2086 414 2081 412 2075 406 2073 401 2073 366 2096 365 2096 321 2074 321 2072 319 2072 283ZM862 265 851 268 842 276 839 283 838 292 841 302 848 310 856 314 864 315 877 311 884 304 888 294 888 287 885 278 878 270 869 266ZM501 257 486 259 472 263 455 272 442 284 435 294 431 305 429 315 430 332 433 342 439 353 453 366 474 375 511 381 526 385 534 392 534 400 529 406 523 409 512 411 494 410 480 406 472 402 455 388 452 388 421 421 421 423 438 439 461 451 484 457 513 458 528 456 547 450 560 443 572 432 579 422 584 408 584 381 580 369 575 361 562 350 538 340 502 334 488 330 480 322 481 313 486 308 493 305 519 304 533 308 541 312 554 322 557 322 583 292 585 286 572 274 553 264 530 258ZM1183 254 1162 257 1147 262 1130 271 1107 292 1097 307 1090 323 1086 340 1085 363 1087 378 1094 400 1104 417 1117 432 1133 444 1151 453 1169 458 1196 459 1221 454 1248 440 1259 431 1276 410 1280 402 1280 398 1235 376 1229 387 1219 397 1205 405 1185 408 1168 404 1156 397 1147 388 1139 374 1136 353 1138 341 1143 330 1149 322 1161 312 1176 306 1193 305 1203 307 1218 315 1228 325 1235 337 1237 337 1280 313 1280 310 1267 290 1256 279 1242 269 1217 258 1202 255ZM96 259 87 272 78 293 76 304 76 325 78 335 84 349 88 355 105 370 113 374 128 378 304 378 308 380 314 388 314 401 311 407 302 413 244 413 208 445 206 444 206 413 124 413 72 468 71 472 307 471 323 467 347 455 368 436 378 422 384 409 388 392 388 375 385 361 376 345 366 335 350 326 331 322 239 322 208 348 206 346 206 322 160 322 154 319 149 311 149 298 154 289 164 284 262 284 311 219 315 211 180 211 166 213 147 219 132 227 114 240Z"/><path fill="#ff1166" d="M414 208 343 208 291 278 288 285 358 285 413 212Z"/></svg>';
+ const icon = (n, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${IC[n] || ''}</svg>`;
+ const TICK1 = '<svg class="ticks" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+ const TICK2 = (read) => `<svg class="ticks${read ? ' read' : ''}" viewBox="0 0 24 24"><path d="M2 12.5l4.5 4.5L16 7.5"/><path d="M11.5 16l1 1L22 7.5"/></svg>`;
+diff --git a/public/js/i18n.js b/public/js/i18n.js
+index 1860ab1..ac43d2d 100644
+--- a/public/js/i18n.js
++++ b/public/js/i18n.js
+@@ -220,7 +220,7 @@ const I18N = {
+     this_device: 'این دستگاه',
+     terminate: 'خروج',
+     install_app: 'نصب اپلیکیشن',
+-    install_hint: 'Connection را روی صفحه اصلی گوشی نصب کنید',
++    install_hint: 'Satin Connect را روی صفحه اصلی گوشی نصب کنید',
+     favorites: 'گفتگوهای مورد علاقه',
+     saved_short: 'ذخیره‌شده',
+     skin: 'طرح ظاهری',
+@@ -339,7 +339,7 @@ const I18N = {
+     enable_notif: 'Enable notifications', notif_on: 'Notifications are on', notif_blocked: 'Notifications are blocked in browser settings',
+     notif_banner: "Turn on notifications so you don't miss messages and calls", notif_unsupported: 'This browser does not support notifications — install the app',
+     test_notif: 'Send a test notification', sounds: 'Message sounds', devices: 'Active devices', this_device: 'This device', terminate: 'Sign out',
+-    install_app: 'Install app', install_hint: 'Add Connection to your home screen', favorites: 'Favorite conversations', saved_short: 'Saved', skin: 'Style', skin_fresh: 'Fresh', skin_glass: 'Glass', android_apk: 'Download Android APK',
++    install_app: 'Install app', install_hint: 'Add Satin Connect to your home screen', favorites: 'Favorite conversations', saved_short: 'Saved', skin: 'Style', skin_fresh: 'Fresh', skin_glass: 'Glass', android_apk: 'Download Android APK',
+     ios_install: 'In Safari: Share → Add to Home Screen', logout: 'Log out', logout_confirm: 'Log out of your account?',
+     no_calls: 'No calls yet', conn_lost: 'Connecting…', offline: 'You are offline', retry: 'Retry', failed_send: 'Not sent — tap to retry',
+     load_failed: 'Failed to load', hold_to_record: 'Tap to record a voice message', voice_too_short: 'Voice message is too short',
+diff --git a/public/manifest.webmanifest b/public/manifest.webmanifest
+index 3510350..9cd5b2d 100644
+--- a/public/manifest.webmanifest
++++ b/public/manifest.webmanifest
+@@ -1,13 +1,13 @@
+ {
+-  "name": "Connection by Satingraphic",
+-  "short_name": "Connection",
++  "name": "Satin Connect",
++  "short_name": "Satin Connect",
+   "description": "پیام‌رسان Connection — چت، گروه، ویس و تماس تصویری",
+   "id": "/",
+   "start_url": "/?source=pwa",
+   "scope": "/",
+   "display": "standalone",
+   "orientation": "portrait",
+-  "background_color": "#f3f4f2",
++  "background_color": "#ffffff",
+   "theme_color": "#1aa978",
+   "dir": "ltr",
+   "lang": "en",
+diff --git a/public/setup.html b/public/setup.html
+index 5e21689..024888f 100644
+--- a/public/setup.html
++++ b/public/setup.html
+@@ -4,7 +4,7 @@
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="robots" content="noindex">
+-<title>Connection · تنظیمات سرور</title>
++<title>Satin Connect · تنظیمات سرور</title>
+ <link rel="stylesheet" href="/app.css?v=1">
+ <style>
+   body{overflow:auto}
+@@ -20,7 +20,8 @@
+ </head>
+ <body>
+ <div class="wrap"><form class="card glass" id="f" autocomplete="off">
+-  <div class="brand"><div class="logo"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M40.5 22.5a13 13 0 1 0 0 19" fill="none" stroke="currentColor" stroke-width="6.5" stroke-linecap="round"/><circle cx="43.5" cy="32" r="3.4" fill="currentColor"/></svg></div><div><h1>تنظیمات سرور</h1><p>فقط برای مدیر — این لینک را به کسی ندهید</p></div></div>
++  <div class="brand" style="display:block;text-align:center"><img src="/icons/icon-192.png" alt="Satin Connect" width="64" height="64" style="border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.15)"></div>
++  <div style="text-align:center"><h1 style="margin:8px 0 2px;font-size:20px">تنظیمات سرور</h1><p style="margin:0">فقط برای مدیر — این لینک را به کسی ندهید</p></div>
+   <div class="err" id="msg"></div>
+ 
+   <h2>📧 ایمیل (ارسال کد ورود)</h2>
+@@ -28,7 +29,7 @@
+   <div class="row2"><input class="input" name="SMTP_HOST" placeholder="SMTP host" dir="ltr"><input class="input" name="SMTP_PORT" placeholder="465" dir="ltr"></div>
+   <input class="input" name="SMTP_USER" placeholder="Email / username" dir="ltr">
+   <input class="input" name="SMTP_PASS" type="password" placeholder="Password" dir="ltr">
+-  <input class="input" name="SMTP_FROM" placeholder="Connection <noreply@satingraphic.ca>" dir="ltr">
++  <input class="input" name="SMTP_FROM" placeholder="Satin Connect <noreply@satingraphic.ca>" dir="ltr">
+   <div class="test"><input class="input" id="tEmail" placeholder="ایمیل برای تست" dir="ltr"><button type="button" class="btn ghost" id="bEmail">ارسال تست</button></div>
+ 
+   <h2>💬 پیامک VoIP.ms (اختیاری — فقط شماره‌های کانادا/آمریکا)</h2>
+@@ -39,7 +40,7 @@
+   <div class="test"><input class="input" id="tSms" placeholder="شماره برای تست" dir="ltr"><button type="button" class="btn ghost" id="bSms">ارسال تست</button></div>
+ 
+   <button class="btn block">ذخیره</button>
+-  <a href="/" class="btn ghost block" style="text-decoration:none">رفتن به Connection</a>
++  <a href="/" class="btn ghost block" style="text-decoration:none">رفتن به Satin Connect</a>
+ </form></div>
+ <script>
+ const tok = location.hash.slice(1);
+diff --git a/public/sw.js b/public/sw.js
+index 6809a29..ce58c31 100644
+--- a/public/sw.js
++++ b/public/sw.js
+@@ -1,6 +1,6 @@
+ /* S-Chat service worker — offline shell, media cache, push notifications */
+-const VERSION = 'sc-v6';
+-const SHELL = ['/', '/app.css?v=6', '/js/i18n.js?v=6', '/js/core.js?v=6', '/js/app.js?v=6', '/js/chat.js?v=6', '/js/media.js?v=6', '/js/call.js?v=6', '/js/main.js?v=6',
++const VERSION = 'sc-v7';
++const SHELL = ['/', '/app.css?v=7', '/js/i18n.js?v=7', '/js/core.js?v=7', '/js/app.js?v=7', '/js/chat.js?v=7', '/js/media.js?v=7', '/js/call.js?v=7', '/js/main.js?v=7',
+   '/manifest.webmanifest', '/img/bokeh.jpg', '/icons/icon-192.png'];
+ 
+ self.addEventListener('install', (e) => {
+@@ -44,7 +44,7 @@ self.addEventListener('fetch', (e) => {
+ 
+ self.addEventListener('push', (e) => {
+   let d = {};
+-  try { d = e.data ? e.data.json() : {}; } catch { d = { title: 'Connection', body: e.data && e.data.text() }; }
++  try { d = e.data ? e.data.json() : {}; } catch { d = { title: 'Satin Connect', body: e.data && e.data.text() }; }
+   e.waitUntil((async () => {
+     const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+     const visible = wins.some((w) => w.visibilityState === 'visible' && w.focused);
+@@ -54,7 +54,7 @@ self.addEventListener('push', (e) => {
+       old.forEach((n) => n.close());
+     }
+     const isCall = d.type === 'call';
+-    await self.registration.showNotification(d.title || 'Connection', {
++    await self.registration.showNotification(d.title || 'Satin Connect', {
+       body: d.body || '',
+       icon: d.icon || '/icons/icon-192.png',
+       badge: '/icons/badge-96.png',
+diff --git a/server/server.js b/server/server.js
+index 47e714d..333512f 100644
+--- a/server/server.js
++++ b/server/server.js
+@@ -25,7 +25,7 @@ const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
+ const PUBLIC_DIR = path.resolve(cfg.PUBLIC_DIR || path.join(__dirname, '..', 'public'));
+ const MAX_UPLOAD = parseInt(cfg.MAX_UPLOAD_MB || '200', 10) * 1024 * 1024;
+ const DEV = cfg.DEV_MODE === '1';
+-const APP_NAME = cfg.APP_NAME && cfg.APP_NAME !== 'S-Chat' ? cfg.APP_NAME : 'Connection';
++const APP_NAME = cfg.APP_NAME && !['S-Chat', 'Connection'].includes(cfg.APP_NAME) ? cfg.APP_NAME : 'Satin Connect';
+ fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+ 
+ const db = open(DATA_DIR);
+@@ -1055,7 +1055,7 @@ route('POST', '/api/setup/test', async ({ req, body }) => {
+   const c = conf();
+   try {
+     if (body.kind === 'sms') await sendSms(c, { to: String(body.to || ''), message: `${APP_NAME}: test ✓` });
+-    else await sendEmail(c, { to: String(body.to || ''), subject: `${APP_NAME} test`, text: 'Connection email works ✓', html: '<p>Connection email works ✓</p>' });
++    else await sendEmail(c, { to: String(body.to || ''), subject: `${APP_NAME} test`, text: 'Satin Connect email works ✓', html: '<p>Satin Connect email works ✓</p>' });
+     return { ok: true };
+   } catch (e) { return { ok: false, error: e.message }; }
+ }, { auth: false });
