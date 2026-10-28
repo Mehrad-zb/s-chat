@@ -1,0 +1,163 @@
+diff --git a/deploy/auto-update.sh b/deploy/auto-update.sh
+new file mode 100755
+index 0000000..d733b8e
+--- /dev/null
++++ b/deploy/auto-update.sh
+@@ -0,0 +1,10 @@
++#!/usr/bin/env bash
++# Runs from cron every 10 minutes: if GitHub has new S-Chat code, pull it and rebuild.
++cd "$(dirname "$0")/.." || exit 1
++git fetch -q origin main || exit 0
++[ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] && exit 0
++echo "$(date) updating to $(git rev-parse --short origin/main)"
++git reset -q --hard origin/main
++docker compose up -d --build
++docker image prune -f >/dev/null
++/etc/cron.daily/s-chat-apk 2>/dev/null || true
+diff --git a/deploy/hostpapa/schat-mail.php b/deploy/hostpapa/schat-mail.php
+new file mode 100644
+index 0000000..1fd1f29
+--- /dev/null
++++ b/deploy/hostpapa/schat-mail.php
+@@ -0,0 +1,21 @@
++<?php
++// S-Chat mail relay — put on normal web hosting (HostPapa). The S-Chat server posts login-code
++// emails here over HTTPS because cloud servers often can't use SMTP ports.
++// Set the same secret as MAIL_RELAY_TOKEN in S-Chat's settings.
++$TOKEN = '__TOKEN__';
++$FROM  = 'S-Chat <noreply@satingraphic.ca>';
++
++header('Content-Type: application/json');
++$in = json_decode(file_get_contents('php://input'), true);
++if (!is_array($in) || !isset($in['token']) || !hash_equals($TOKEN, (string)$in['token'])) { http_response_code(403); echo '{"ok":false,"error":"forbidden"}'; exit; }
++$to = filter_var($in['to'] ?? '', FILTER_VALIDATE_EMAIL);
++if (!$to) { http_response_code(400); echo '{"ok":false,"error":"bad to"}'; exit; }
++$subject = '=?UTF-8?B?' . base64_encode(mb_substr((string)($in['subject'] ?? 'S-Chat'), 0, 150)) . '?=';
++$text = (string)($in['text'] ?? '');
++$html = (string)($in['html'] ?? nl2br(htmlspecialchars($text)));
++$b = 'b' . bin2hex(random_bytes(8));
++$headers = "From: $FROM\r\nReply-To: $FROM\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=\"$b\"";
++$body = "--$b\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($text))
++      . "--$b\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($html)) . "--$b--\r\n";
++$ok = mail($to, $subject, $body, $headers, '-fnoreply@satingraphic.ca');
++echo json_encode(['ok' => (bool)$ok, 'error' => $ok ? '' : 'mail() failed']);
+diff --git a/deploy/install.sh b/deploy/install.sh
+index 4b51da1..94b448f 100755
+--- a/deploy/install.sh
++++ b/deploy/install.sh
+@@ -106,6 +106,8 @@ curl -fsSL -o $DIR/data/download/s-chat.apk.tmp "\$(grep ^APK_URL= $DIR/.env | c
+ EOF
+ chmod +x /etc/cron.daily/s-chat-apk; /etc/cron.daily/s-chat-apk || true
+ 
++echo "*/10 * * * * root bash $DIR/deploy/auto-update.sh >> /var/log/s-chat-update.log 2>&1" > /etc/cron.d/s-chat-update
++
+ say "Done!  Open https://$DOMAIN"
+ echo "Server settings page (email/SMS):  https://$DOMAIN/setup.html#$SETUP_TOKEN"
+ echo "Update later with:   cd $DIR && bash deploy/update.sh"
+diff --git a/public/js/app.js b/public/js/app.js
+index 8ab9bb4..f2e04fd 100644
+--- a/public/js/app.js
++++ b/public/js/app.js
+@@ -44,7 +44,7 @@ const App = {
+     box.innerHTML = `
+       <div style="display:grid;gap:14px">
+         <div><h2 style="margin:0 0 4px;font-size:19px">${t('login_title')}</h2><div class="mut small">${t('login_hint')}</div></div>
+-        <input class="input" id="tgt" type="text" inputmode="email" autocomplete="username" dir="ltr" placeholder="${t('login_ph')}" value="${esc(prefill)}" required>
++        <input class="input" id="tgt" type="text" inputmode="email" autocomplete="username" dir="ltr" placeholder="${S.config.sms ? t('login_ph') : t('email')}" value="${esc(prefill)}" required>
+         <div class="err" id="aerr"></div>
+         <button class="btn block" id="go">${t('send_code')}</button>
+       </div>`;
+diff --git a/public/js/i18n.js b/public/js/i18n.js
+index ffd7d9a..2aa7747 100644
+--- a/public/js/i18n.js
++++ b/public/js/i18n.js
+@@ -222,6 +222,7 @@ const I18N = {
+     e_WAIT: 'لطفاً یک دقیقه صبر کنید و دوباره امتحان کنید',
+     e_RATE_LIMIT: 'تعداد درخواست‌ها زیاد است، کمی بعد امتحان کنید',
+     e_SEND_FAILED: 'ارسال کد ناموفق بود',
++    e_SMS_DISABLED: 'ورود با شماره موبایل فعلاً فعال نیست — لطفاً ایمیل خود را وارد کنید',
+     e_SMS_NOT_SUPPORTED: 'ارسال پیامک به این شماره ممکن نیست — لطفاً با ایمیل وارد شوید',
+     e_BAD_CODE: 'کد اشتباه است',
+     e_CODE_EXPIRED: 'کد منقضی شده، دوباره ارسال کنید',
+@@ -301,7 +302,7 @@ const I18N = {
+     load_failed: 'Failed to load', hold_to_record: 'Tap to record a voice message', voice_too_short: 'Voice message is too short',
+     play_speed: 'Speed', download: 'Download', open: 'Open', view_profile: 'View profile', confirm: 'Confirm', yes: 'Yes', no: 'No', version: 'Version',
+     e_BAD_EMAIL: 'Invalid email', e_BAD_PHONE: 'Invalid mobile number (e.g. 4165551234 or +98912…)', e_WAIT: 'Please wait a minute and try again',
+-    e_RATE_LIMIT: 'Too many requests, try again later', e_SEND_FAILED: 'Could not send the code', e_SMS_NOT_SUPPORTED: "We can't text this number — please use email",
++    e_RATE_LIMIT: 'Too many requests, try again later', e_SEND_FAILED: 'Could not send the code', e_SMS_DISABLED: 'Sign-in by mobile number is not enabled yet — please use your email', e_SMS_NOT_SUPPORTED: "We can't text this number — please use email",
+     e_BAD_CODE: 'Wrong code', e_CODE_EXPIRED: 'Code expired, request a new one', e_TOO_MANY_ATTEMPTS: 'Too many attempts — request a new code',
+     e_USERNAME_TAKEN: 'Username is taken', e_BAD_USERNAME: 'Username: letters, numbers and _ (4–32, start with a letter)',
+     e_NAME_REQUIRED: 'Please enter your name', e_ALREADY_USED: 'Already used by another account', e_BLOCKED: "You can't message this user",
+diff --git a/server/lib/notify.js b/server/lib/notify.js
+index 8186865..f1e5d98 100644
+--- a/server/lib/notify.js
++++ b/server/lib/notify.js
+@@ -50,7 +50,25 @@ function encodeHeader(s) {
+   return /^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${Buffer.from(s).toString('base64')}?=`;
+ }
+ 
+-async function sendEmail(cfg, { to, subject, text, html }) {
++// HTTPS mail relay (a small PHP script on regular web hosting) — used because many
++// cloud providers (DigitalOcean included) block outgoing SMTP ports on new servers.
++async function sendViaRelay(cfg, { to, subject, text, html }) {
++  const r = await fetch(cfg.MAIL_RELAY_URL, {
++    method: 'POST',
++    headers: { 'Content-Type': 'application/json' },
++    body: JSON.stringify({ token: cfg.MAIL_RELAY_TOKEN || '', to, subject, text, html, from: cfg.SMTP_FROM || '' }),
++    signal: AbortSignal.timeout(20000),
++  });
++  const j = await r.json().catch(() => ({}));
++  if (!r.ok || !j.ok) throw new Error('Mail relay: ' + (j.error || r.status));
++}
++
++async function sendEmail(cfg, msg) {
++  if (cfg.MAIL_RELAY_URL) return sendViaRelay(cfg, msg);
++  return sendSmtp(cfg, msg);
++}
++
++async function sendSmtp(cfg, { to, subject, text, html }) {
+   if (!cfg.SMTP_HOST) throw new Error('SMTP is not configured');
+   const port = parseInt(cfg.SMTP_PORT || '465', 10);
+   const host = cfg.SMTP_HOST;
+@@ -59,8 +77,8 @@ async function sendEmail(cfg, { to, subject, text, html }) {
+     const s = secure
+       ? tls.connect({ host, port, servername: host }, () => res(s))
+       : net.connect({ host, port }, () => res(s));
+-    s.setTimeout(20000, () => { s.destroy(new Error('SMTP timeout')); });
+-    s.once('error', rej);
++    s.setTimeout(15000, () => { s.destroy(new Error('SMTP timeout (port ' + port + ' blocked?)')); });
++    s.once('error', (e) => rej(new Error(e.message || e.code || (e.errors && e.errors[0] && e.errors[0].code) || 'SMTP connection failed')));
+   });
+   let s = smtpSession(sock);
+   const me = os.hostname() || 's-chat';
+diff --git a/server/server.js b/server/server.js
+index 6317ab3..3818407 100644
+--- a/server/server.js
++++ b/server/server.js
+@@ -35,7 +35,7 @@ const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
+ const q = (sql) => db.prepare(sql);
+ 
+ // Settings editable from the /setup page (stored in the DB, override .env)
+-const SETTING_KEYS = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'VOIPMS_USER', 'VOIPMS_API_PASS', 'VOIPMS_DID'];
++const SETTING_KEYS = ['MAIL_RELAY_URL', 'MAIL_RELAY_TOKEN', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'VOIPMS_USER', 'VOIPMS_API_PASS', 'VOIPMS_DID'];
+ function dbSettings() { const r = db.prepare("SELECT v FROM kv WHERE k='settings'").get(); return r ? JSON.parse(r.v) : {}; }
+ function conf() { return { ...cfg, ...Object.fromEntries(Object.entries(dbSettings()).filter(([, v]) => v !== '' && v != null)) }; }
+ 
+@@ -262,6 +262,8 @@ function clientIp(req) {
+ 
+ async function startOtp(target, req) {
+   rateLimit('otp-ip:' + clientIp(req), 10, 3600000);
++  const c0 = conf();
++  if (!DEV && target.kind === 'phone' && !(c0.VOIPMS_USER && c0.VOIPMS_API_PASS && c0.VOIPMS_DID)) fail(400, 'SMS_DISABLED');
+   const existing = q('SELECT * FROM otps WHERE target = ?').get(target.value);
+   if (existing && now() - existing.sent_at < 55000) fail(429, 'WAIT');
+   const code = String(crypto.randomInt(100000, 1000000));
+@@ -516,7 +518,7 @@ route('GET', '/api/config', async () => ({
+   name: APP_NAME,
+   vapid: pusher.publicKey,
+   sms: !!(conf().VOIPMS_USER && conf().VOIPMS_API_PASS && conf().VOIPMS_DID),
+-  email: !!conf().SMTP_HOST,
++  email: !!(conf().SMTP_HOST || conf().MAIL_RELAY_URL),
+   dev: DEV,
+   max_upload: MAX_UPLOAD,
+ }), { auth: false });
