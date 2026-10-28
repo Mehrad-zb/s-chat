@@ -1,0 +1,200 @@
+diff --git a/public/index.html b/public/index.html
+index 47587d6..43a8b47 100644
+--- a/public/index.html
++++ b/public/index.html
+@@ -14,16 +14,16 @@
+ <link rel="icon" href="/icons/icon-192.png?v=2" type="image/png">
+ <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2">
+ <link rel="preload" href="/fonts/Vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
+-<link rel="stylesheet" href="/app.css?v=8">
++<link rel="stylesheet" href="/app.css?v=9">
+ </head>
+ <body>
+ <div id="root"><div class="auth"><div class="spinner"></div></div></div>
+-<script src="/js/i18n.js?v=8"></script>
+-<script src="/js/core.js?v=8"></script>
+-<script src="/js/app.js?v=8"></script>
+-<script src="/js/chat.js?v=8"></script>
+-<script src="/js/media.js?v=8"></script>
+-<script src="/js/call.js?v=8"></script>
+-<script src="/js/main.js?v=8"></script>
++<script src="/js/i18n.js?v=9"></script>
++<script src="/js/core.js?v=9"></script>
++<script src="/js/app.js?v=9"></script>
++<script src="/js/chat.js?v=9"></script>
++<script src="/js/media.js?v=9"></script>
++<script src="/js/call.js?v=9"></script>
++<script src="/js/main.js?v=9"></script>
+ </body>
+ </html>
+diff --git a/public/js/app.js b/public/js/app.js
+index 7b044f6..6b179d8 100644
+--- a/public/js/app.js
++++ b/public/js/app.js
+@@ -764,7 +764,15 @@ const Settings = {
+     nb.onclick = async () => { await Push.request(); $('#sNotifTxt').textContent = Push.statusText(); nb.hidden = Push.state() === 'granted'; };
+     if (Push.state() === 'granted') {
+       const tb = h(`<button class="btn ghost" style="min-height:36px;padding:6px 14px;font-size:13px">${t('test_notif')}</button>`);
+-      tb.onclick = async () => { await Push.subscribe(); API.post('/api/push/test').catch(() => {}); };
++      tb.onclick = async () => {
++        await Push.subscribe();
++        try {
++          const r = await API.post('/api/push/test');
++          if (!r.results || !r.results.length) toast(t('push_no_sub'));
++          else if (!r.ok) toast(t('push_failed') + ' (' + r.results.map((x) => x.status).join(', ') + ')');
++          else toast(t('push_sent'));
++        } catch { toast(errText('NETWORK')); }
++      };
+       nb.after(tb);
+     }
+     $$('button[data-skin]').forEach((b) => b.onclick = () => { try { localStorage.setItem('sc_skin', b.dataset.skin); } catch {} applyTheme(); this.render(); });
+diff --git a/public/js/i18n.js b/public/js/i18n.js
+index ac43d2d..0aec176 100644
+--- a/public/js/i18n.js
++++ b/public/js/i18n.js
+@@ -11,6 +11,7 @@ const I18N = {
+     login_user_ph: 'نام کاربری یا ایمیل',
+     password: 'رمز عبور',
+     password_ph: 'رمز عبور (حداقل ۸ کاراکتر)',
++    push_sent: 'نوتیفیکیشن تست فرستاده شد — چند ثانیه صبر کنید', push_failed: 'ارسال نوتیفیکیشن ناموفق بود', push_no_sub: 'این دستگاه برای نوتیفیکیشن ثبت نشده — اجازهٔ نوتیفیکیشن را بدهید',
+     confirm_password: 'تکرار رمز عبور', confirm_password_ph: 'رمز را دوباره وارد کنید', e_PW_MISMATCH: 'دو رمز با هم یکی نیستند',
+     password_hint: 'حداقل ۸ کاراکتر — دفعه‌های بعد با نام کاربری و همین رمز وارد می‌شوید',
+     signin: 'ورود',
+@@ -274,6 +275,7 @@ const I18N = {
+     app_tag: 'Private, fast and secure messenger',
+     notif_ask_title: 'Turn on notifications', notif_ask_body: 'Get alerted on your screen when a new message or call arrives — even when the app is closed.', not_now: 'Not now',
+     signin_title: 'Sign in', signin_hint: 'Use your username or email and password', login_user_ph: 'Username or email',
++    push_sent: 'Test notification sent — wait a few seconds', push_failed: 'Sending the notification failed', push_no_sub: 'This device is not registered for notifications — allow notifications first',
+     confirm_password: 'Confirm password', confirm_password_ph: 'Re-enter the password', e_PW_MISMATCH: "Passwords don't match",
+     password: 'Password', password_ph: 'Password (at least 8 characters)', password_hint: 'At least 8 characters — next time sign in with your username and this password',
+     signin: 'Sign in', create_account: 'Create an account', forgot_password: 'Forgot password?', have_account: 'I have an account — sign in',
+diff --git a/public/js/main.js b/public/js/main.js
+index f9b7efa..90728b3 100644
+--- a/public/js/main.js
++++ b/public/js/main.js
+@@ -170,7 +170,9 @@ window.addEventListener('keydown', (e) => {
+   }
+ });
+ // unlock audio on first interaction (for ringtones)
+-window.addEventListener('pointerdown', () => Sound.ensure(), { once: true });
++// keep the audio engine unlocked (iOS suspends it whenever the app goes to the background)
++['pointerdown', 'touchend', 'keydown'].forEach((ev) => window.addEventListener(ev, () => Sound.ensure(), { passive: true }));
++document.addEventListener('visibilitychange', () => { if (!document.hidden && Sound.ctx) Sound.ctx.resume().catch(() => {}); });
+ 
+ // ---------------- service worker ----------------
+ if ('serviceWorker' in navigator) {
+diff --git a/public/sw.js b/public/sw.js
+index fd657b4..722777c 100644
+--- a/public/sw.js
++++ b/public/sw.js
+@@ -1,6 +1,6 @@
+ /* S-Chat service worker — offline shell, media cache, push notifications */
+-const VERSION = 'sc-v8';
+-const SHELL = ['/', '/app.css?v=8', '/js/i18n.js?v=8', '/js/core.js?v=8', '/js/app.js?v=8', '/js/chat.js?v=8', '/js/media.js?v=8', '/js/call.js?v=8', '/js/main.js?v=8',
++const VERSION = 'sc-v9';
++const SHELL = ['/', '/app.css?v=9', '/js/i18n.js?v=9', '/js/core.js?v=9', '/js/app.js?v=9', '/js/chat.js?v=9', '/js/media.js?v=9', '/js/call.js?v=9', '/js/main.js?v=9',
+   '/manifest.webmanifest', '/img/bokeh.jpg', '/icons/icon-192.png?v=2'];
+ 
+ self.addEventListener('install', (e) => {
+@@ -46,9 +46,8 @@ self.addEventListener('push', (e) => {
+   let d = {};
+   try { d = e.data ? e.data.json() : {}; } catch { d = { title: 'Satin Connect', body: e.data && e.data.text() }; }
+   e.waitUntil((async () => {
+-    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+-    const visible = wins.some((w) => w.visibilityState === 'visible' && w.focused);
+-    if (visible && d.type === 'message') return; // the open app plays its own sound
++    // Always show a notification: iOS/Safari cancels push for sites that receive a push without showing one.
++    // (The server already skips pushes for the chat you are looking at.)
+     if (d.type === 'missed-call' && d.tag) {
+       const old = await self.registration.getNotifications({ tag: d.tag.replace('call-', 'call-') });
+       old.forEach((n) => n.close());
+@@ -60,6 +59,7 @@ self.addEventListener('push', (e) => {
+       badge: '/icons/badge-96.png?v=2',
+       tag: d.tag || 'sc',
+       renotify: true,
++      silent: false,
+       requireInteraction: isCall,
+       vibrate: isCall ? [500, 250, 500, 250, 500, 250, 500] : [120, 60, 120],
+       data: { chat_id: d.chat_id, type: d.type, call_id: d.call_id },
+diff --git a/server/lib/push.js b/server/lib/push.js
+index 50ee730..fdebe23 100644
+--- a/server/lib/push.js
++++ b/server/lib/push.js
+@@ -72,12 +72,18 @@ class Pusher {
+     if (r.status === 404 || r.status === 410) {
+       this.db.prepare('DELETE FROM push_subs WHERE endpoint = ?').run(sub.endpoint);
+     }
++    if (r.status >= 300) {
++      const txt = await r.text().catch(() => '');
++      console.warn('[push]', new URL(sub.endpoint).host, r.status, txt.slice(0, 200));
++    }
+     return r.status;
+   }
+ 
+   async sendToUser(userId, payload, opts) {
+     const subs = this.db.prepare('SELECT * FROM push_subs WHERE user_id = ?').all(userId);
+-    await Promise.all(subs.map((s) => this.send(s, payload, opts).catch(() => 0)));
++    return Promise.all(subs.map((s) => this.send(s, payload, opts)
++      .then((status) => ({ host: new URL(s.endpoint).host, status }))
++      .catch((e) => { console.warn('[push]', e.message); return { host: new URL(s.endpoint).host, status: 0 }; })));
+   }
+ }
+ 
+diff --git a/server/server.js b/server/server.js
+index 8b38012..3b71afc 100644
+--- a/server/server.js
++++ b/server/server.js
+@@ -29,7 +29,7 @@ const APP_NAME = cfg.APP_NAME && !['S-Chat', 'Connection'].includes(cfg.APP_NAME
+ fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+ 
+ const db = open(DATA_DIR);
+-const pusher = new Pusher(db, cfg.VAPID_SUBJECT || `mailto:${cfg.SMTP_USER || 'admin@example.com'}`);
++const pusher = new Pusher(db, cfg.VAPID_SUBJECT || `mailto:${cfg.ACME_EMAIL || cfg.SMTP_USER || 'mehrad.tr@gmail.com'}`);
+ const now = () => Date.now();
+ const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
+ const q = (sql) => db.prepare(sql);
+@@ -392,7 +392,7 @@ function endCall(callId, reason, byUser) {
+   calls.delete(callId);
+   if (userCall.get(c.from) === callId) userCall.delete(c.from);
+   if (userCall.get(c.to) === callId) userCall.delete(c.to);
+-  clearTimeout(c.timer);
++  clearTimeout(c.timer); clearInterval(c.ringTimer);
+   const duration = c.startedAt ? Math.round((now() - c.startedAt) / 1000) : 0;
+   const status = c.startedAt ? 'ended' : reason === 'reject' ? 'declined' : reason === 'busy' ? 'busy' : reason === 'cancel' ? 'cancelled' : 'missed';
+   const evt = { t: 'call:end', call_id: callId, reason, by: byUser || null };
+@@ -490,7 +490,14 @@ function onWsMessage(uid, conn, m) {
+       call.timer = setTimeout(() => endCall(call.id, 'timeout'), 45000);
+       const fromUser = publicUser(getUser(uid), to);
+       emitTo(to, { t: 'call:invite', call_id: call.id, chat_id: chat.id, from: fromUser, video: call.video });
+-      pusher.sendToUser(to, { type: 'call', chat_id: chat.id, call_id: call.id, title: fromUser.name, body: call.video ? '📹 تماس تصویری…' : '📞 در حال تماس…', icon: fromUser.avatar, tag: 'call-' + call.id }, { ttl: 45, urgency: 'high' }).catch(() => {});
++      const ringPush = () => pusher.sendToUser(to, { type: 'call', chat_id: chat.id, call_id: call.id, title: fromUser.name, body: call.video ? '📹 تماس تصویری… / Video call' : '📞 در حال تماس… / Calling', icon: fromUser.avatar, tag: 'call-' + call.id }, { ttl: 30, urgency: 'high' }).catch(() => {});
++      ringPush();
++      // keep "ringing" the phone (each push re-alerts) until answered / ended
++      let rings = 0;
++      call.ringTimer = setInterval(() => {
++        if (!calls.has(call.id) || call.startedAt || ++rings > 7) return clearInterval(call.ringTimer);
++        ringPush();
++      }, 5000);
+       break;
+     }
+     case 'call:ringing':
+@@ -502,7 +509,7 @@ function onWsMessage(uid, conn, m) {
+       const peer = c.from === uid ? c.to : c.from;
+       if (m.t === 'call:accept') {
+         if (c.to !== uid || c.startedAt) return;
+-        c.startedAt = now(); clearTimeout(c.timer);
++        c.startedAt = now(); clearTimeout(c.timer); clearInterval(c.ringTimer);
+         // tell the callee's other devices to stop ringing
+         for (const other of sockets.get(uid) || []) if (other !== conn) other.send({ t: 'call:end', call_id: c.id, reason: 'answered-elsewhere' });
+         c.calleeConn = conn;
+@@ -651,8 +658,8 @@ route('POST', '/api/push/subscribe', async ({ s, body }) => {
+   return { ok: true };
+ });
+ route('POST', '/api/push/test', async ({ s }) => {
+-  await pusher.sendToUser(s.user_id, { type: 'test', title: APP_NAME, body: 'نوتیفیکیشن فعال است ✅', tag: 'test' });
+-  return { ok: true };
++  const results = await pusher.sendToUser(s.user_id, { type: 'test', title: APP_NAME, body: 'نوتیفیکیشن فعال است ✅ / Notifications work', tag: 'test' });
++  return { ok: results.some((r) => r.status >= 200 && r.status < 300), results };
+ });
+ 
+ route('GET', '/api/turn', async ({ s, req }) => ({ ice: turnServers(s.user_id, req.headers['x-forwarded-host'] || req.headers.host) }));
