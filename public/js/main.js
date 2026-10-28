@@ -149,7 +149,7 @@ window.addEventListener('offline', () => App.connState());
 window.addEventListener('popstate', () => { if (S.cur && window.innerWidth <= 820) Chat.close(); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyTheme());
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && S.cur && !document.querySelector('.ov,.viewer,.pop,#callOv') && !Chat.reply && !Chat.editing) {
+  if (e.key === 'Escape' && !e.defaultPrevented && S.cur && !document.querySelector('.ov,.viewer,.pop,#callOv') && !Chat.reply && !Chat.editing) {
     if (Info.el) Info.close(); else if (window.innerWidth > 820) Chat.close();
   }
 });

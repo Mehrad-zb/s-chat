@@ -63,6 +63,7 @@ const IC = {
   at: '<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.9 7.9"/>',
   speaker: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',
 };
+const LOGO = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M40.5 22.5a13 13 0 1 0 0 19" fill="none" stroke="currentColor" stroke-width="6.5" stroke-linecap="round"/><circle cx="43.5" cy="32" r="3.4" fill="currentColor"/></svg>';
 const icon = (n, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${IC[n] || ''}</svg>`;
 const TICK1 = '<svg class="ticks" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const TICK2 = (read) => `<svg class="ticks${read ? ' read' : ''}" viewBox="0 0 24 24"><path d="M2 12.5l4.5 4.5L16 7.5"/><path d="M11.5 16l1 1L22 7.5"/></svg>`;

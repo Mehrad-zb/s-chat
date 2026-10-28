@@ -32,7 +32,7 @@ const App = {
         <button class="chip ${LANG === 'en' ? 'on' : ''}" data-l="en">English</button>
       </div>
       <div class="auth"><form class="auth-card glass" id="authForm" novalidate>
-        <div class="brand"><div class="logo">C</div><div><h1>Connection</h1><span class="by">by Satingraphic</span><p>${t('app_tag')}</p></div></div>
+        <div class="brand"><div class="logo">${LOGO}</div><div><h1>Connection</h1><span class="by">by Satingraphic</span><p>${t('app_tag')}</p></div></div>
         <div id="authStep"></div>
       </form></div>`;
     $$('.auth-top .chip').forEach((b) => b.onclick = () => { setLang(b.dataset.l); this.showAuth(); });
@@ -148,7 +148,7 @@ const App = {
     root.innerHTML = `
       <div class="app" id="app">
         <nav class="rail glass" aria-label="Connection">
-          <div class="logo" title="Connection by Satingraphic">C</div>
+          <div class="logo" title="Connection by Satingraphic">${LOGO}</div>
           <button class="ibtn" data-tab="chats" title="${t('chats')}">${icon('chat')}<span class="badge" id="railBadge" hidden></span></button>
           <button class="ibtn" data-tab="calls" title="${t('calls')}">${icon('phone')}</button>
           <button class="ibtn" data-tab="settings" title="${t('settings')}">${icon('settings')}</button>
@@ -422,7 +422,7 @@ const Menu = {
     setTimeout(() => {
       this._off = (e) => { if (!el.contains(e.target)) this.close(); };
       document.addEventListener('pointerdown', this._off, true);
-      this._key = (e) => { if (e.key === 'Escape') this.close(); };
+      this._key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); this.close(); } };
       document.addEventListener('keydown', this._key);
     });
     return el;
@@ -439,7 +439,7 @@ const Modals = {
   open(html, { sheet = true, onClose } = {}) {
     const ov = h(`<div class="ov ${sheet ? 'sheet' : ''}"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`);
     const close = () => { ov.remove(); document.removeEventListener('keydown', key); if (onClose) onClose(); };
-    const key = (e) => { if (e.key === 'Escape') close(); };
+    const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
     ov.addEventListener('pointerdown', (e) => { if (e.target === ov) close(); });
     document.addEventListener('keydown', key);
     document.body.appendChild(ov);
