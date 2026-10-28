@@ -1,7 +1,7 @@
 /* S-Chat service worker — offline shell, media cache, push notifications */
-const VERSION = 'sc-v7';
-const SHELL = ['/', '/app.css?v=7', '/js/i18n.js?v=7', '/js/core.js?v=7', '/js/app.js?v=7', '/js/chat.js?v=7', '/js/media.js?v=7', '/js/call.js?v=7', '/js/main.js?v=7',
-  '/manifest.webmanifest', '/img/bokeh.jpg', '/icons/icon-192.png'];
+const VERSION = 'sc-v8';
+const SHELL = ['/', '/app.css?v=8', '/js/i18n.js?v=8', '/js/core.js?v=8', '/js/app.js?v=8', '/js/chat.js?v=8', '/js/media.js?v=8', '/js/call.js?v=8', '/js/main.js?v=8',
+  '/manifest.webmanifest', '/img/bokeh.jpg', '/icons/icon-192.png?v=2'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL).catch(() => {})).then(() => self.skipWaiting()));
@@ -56,8 +56,8 @@ self.addEventListener('push', (e) => {
     const isCall = d.type === 'call';
     await self.registration.showNotification(d.title || 'Satin Connect', {
       body: d.body || '',
-      icon: d.icon || '/icons/icon-192.png',
-      badge: '/icons/badge-96.png',
+      icon: d.icon || '/icons/icon-192.png?v=2',
+      badge: '/icons/badge-96.png?v=2',
       tag: d.tag || 'sc',
       renotify: true,
       requireInteraction: isCall,

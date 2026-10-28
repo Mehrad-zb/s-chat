@@ -44,7 +44,7 @@ const Call = {
     this.showOverlay();
     Sound.startRing('incoming');
     if (document.hidden && 'Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) {
-      navigator.serviceWorker.ready.then((reg) => reg.showNotification(peer.name, { body: m.video ? t('incoming_video') : t('incoming_call'), tag: 'call-' + m.call_id, renotify: true, requireInteraction: true, icon: '/icons/icon-192.png', data: { chat_id: m.chat_id } })).catch(() => {});
+      navigator.serviceWorker.ready.then((reg) => reg.showNotification(peer.name, { body: m.video ? t('incoming_video') : t('incoming_call'), tag: 'call-' + m.call_id, renotify: true, requireInteraction: true, icon: '/icons/icon-192.png?v=2', data: { chat_id: m.chat_id } })).catch(() => {});
     }
   },
 

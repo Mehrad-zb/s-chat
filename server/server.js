@@ -1144,7 +1144,7 @@ function serveStatic(req, res, pathname) {
         if (cfg.APK_URL) { res.writeHead(302, { Location: cfg.APK_URL }); return res.end(); }
         return send(res, 404, 'APK not uploaded yet');
       }
-      res.writeHead(200, { 'Content-Type': 'application/vnd.android.package-archive', 'Content-Length': st.size, 'Content-Disposition': 'attachment; filename="Connection.apk"', 'Cache-Control': 'no-cache' });
+      res.writeHead(200, { 'Content-Type': 'application/vnd.android.package-archive', 'Content-Length': st.size, 'Content-Disposition': 'attachment; filename="Satin-Connect.apk"', 'Cache-Control': 'no-cache' });
       fs.createReadStream(apk).pipe(res);
     });
   }
@@ -1155,7 +1155,7 @@ function serveStatic(req, res, pathname) {
   fs.readFile(p, (err, data) => {
     if (err) return send(res, 404, 'Not found');
     const ext = path.extname(p);
-    const long = /\/(fonts|icons|sounds)\//.test(p);
+    const long = /\/(fonts|sounds)\//.test(p);
     res.writeHead(200, {
       'Content-Type': MIME[ext] || 'application/octet-stream',
       'Cache-Control': long ? 'public, max-age=2592000' : 'no-cache',
