@@ -168,7 +168,7 @@ const API = {
     const j = await r.json().catch(() => ({}));
     if (!r.ok) {
       const e = new Error(j.error || 'HTTP_' + r.status); e.code = j.error || 'default'; e.status = r.status;
-      if (r.status === 401 && path !== '/api/auth/verify') App.onUnauthorized();
+      if (r.status === 401 && !path.startsWith('/api/auth/')) App.onUnauthorized();
       throw e;
     }
     return j;
@@ -292,40 +292,63 @@ function sysText(m) {
 
 // ---------- sounds (generated, no audio files) ----------
 const Sound = {
-  ctx: null,
+  ctx: null, out: null,
   ensure() {
-    if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+    if (!this.ctx) {
+      try {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // compressor + gain = loud but not distorted
+        const comp = this.ctx.createDynamicsCompressor();
+        comp.threshold.value = -18; comp.knee.value = 6; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.2;
+        this.out = this.ctx.createGain(); this.out.gain.value = 1.6;
+        comp.connect(this.out); this.out.connect(this.ctx.destination);
+        this.bus = comp;
+      } catch { return null; }
+    }
     if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
     return this.ctx;
   },
-  tone(freqs, dur, vol = 0.12, when = 0) {
+  tone(freqs, dur, vol = 0.4, when = 0, type = 'triangle') {
     const ctx = this.ensure(); if (!ctx) return;
     const t0 = ctx.currentTime + when;
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    g.connect(ctx.destination);
+    g.connect(this.bus);
     for (const f of [].concat(freqs)) {
-      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      const o = ctx.createOscillator(); o.type = type; o.frequency.value = f;
       o.connect(g); o.start(t0); o.stop(t0 + dur + 0.05);
+      // bright overtone so it cuts through on phone speakers
+      const o2 = ctx.createOscillator(); const g2 = ctx.createGain(); g2.gain.value = 0.35;
+      o2.type = 'sine'; o2.frequency.value = f * 2; o2.connect(g2); g2.connect(g); o2.start(t0); o2.stop(t0 + dur + 0.05);
     }
   },
-  msg() { if (!S.sounds) return; this.tone(880, 0.12, 0.08); this.tone(1320, 0.16, 0.06, 0.09); },
-  sent() { if (!S.sounds) return; this.tone(660, 0.08, 0.04); },
+  msg() {
+    if (!S.sounds) return;
+    this.tone(988, 0.18, 0.7); this.tone(1319, 0.22, 0.7, 0.11); this.tone(1760, 0.32, 0.55, 0.22);
+    if (navigator.vibrate && document.hidden) { try { navigator.vibrate([150, 80, 150]); } catch {} }
+  },
+  sent() { if (!S.sounds) return; this.tone(784, 0.1, 0.25); },
   loopTimer: null,
   startRing(kind) {
     this.stopRing();
     const play = () => {
-      if (kind === 'incoming') { this.tone([660, 880], 0.35, 0.12); this.tone([660, 880], 0.35, 0.12, 0.45); }
-      else this.tone(425, 1.0, 0.07);
+      if (kind === 'incoming') {
+        // classic double-ring, repeated
+        for (let i = 0; i < 2; i++) {
+          const b = i * 0.9;
+          for (let k = 0; k < 4; k++) this.tone([1046, 1318], 0.09, 0.8, b + k * 0.1, 'square');
+          this.tone([784, 1046], 0.35, 0.7, b + 0.42);
+        }
+        if (navigator.vibrate) { try { navigator.vibrate([600, 250, 600]); } catch {} }
+      } else { this.tone([440, 480], 1.2, 0.45, 0, 'sine'); }
     };
     play();
-    this.loopTimer = setInterval(play, kind === 'incoming' ? 2200 : 4000);
-    if (kind === 'incoming' && navigator.vibrate) { try { navigator.vibrate([400, 200, 400]); } catch {} }
+    this.loopTimer = setInterval(play, kind === 'incoming' ? 2600 : 4000);
   },
   stopRing() { clearInterval(this.loopTimer); this.loopTimer = null; if (navigator.vibrate) { try { navigator.vibrate(0); } catch {} } },
-  end() { this.tone(480, 0.25, 0.08); this.tone(380, 0.35, 0.08, 0.28); },
+  end() { this.tone(523, 0.25, 0.45); this.tone(392, 0.4, 0.45, 0.26); },
 };
 
 // ---------- realtime ----------

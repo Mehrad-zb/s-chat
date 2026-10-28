@@ -150,7 +150,8 @@ const App = {
         </div>
         <label class="f">${t('name')}<input class="input" id="pfName" maxlength="64" placeholder="${t('name_ph')}" value="${esc(me.name)}" autocomplete="name"></label>
         <label class="f">${t('username')}<input class="input" id="pfUser" dir="ltr" maxlength="32" placeholder="@username" value="${esc(me.username || '')}" autocapitalize="off" spellcheck="false" autocomplete="username"><span class="mut small" style="font-weight:400">${t('username_hint_req')}</span></label>
-        ${me.has_password ? '' : `<label class="f">${t('password')}<div class="pw"><input class="input" id="pfPw" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('password_ph')}"><button type="button" class="ibtn eye" id="pfEye">${icon('eye')}</button></div><span class="mut small" style="font-weight:400">${t('password_hint')}</span></label>`}
+        ${me.has_password ? '' : `<label class="f">${t('password')}<div class="pw"><input class="input" id="pfPw" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('password_ph')}"><button type="button" class="ibtn eye" id="pfEye">${icon('eye')}</button></div><span class="mut small" style="font-weight:400">${t('password_hint')}</span></label>
+        <label class="f">${t('confirm_password')}<div class="pw"><input class="input" id="pfPw2" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('confirm_password_ph')}"><button type="button" class="ibtn eye" id="pfEye2">${icon('eye')}</button></div></label>`}
         <div class="err" id="perr"></div>
         <button class="btn block">${t(first ? 'continue' : 'save')}</button>
       </form></div>`;
@@ -166,6 +167,7 @@ const App = {
     };
     $('#pfName').focus();
     if ($('#pfEye')) $('#pfEye').onclick = () => { const p = $('#pfPw'); p.type = p.type === 'password' ? 'text' : 'password'; };
+    if ($('#pfEye2')) $('#pfEye2').onclick = () => { const p = $('#pfPw2'); p.type = p.type === 'password' ? 'text' : 'password'; };
     $('#pf').onsubmit = async (e) => {
       e.preventDefault();
       $('#perr').textContent = '';
@@ -173,6 +175,7 @@ const App = {
       if (!uname) { $('#perr').textContent = errText('USERNAME_REQUIRED'); $('#pfUser').focus(); return; }
       const pwEl = $('#pfPw');
       if (pwEl && pwEl.value.length < 8) { $('#perr').textContent = errText('BAD_PASSWORD'); pwEl.focus(); return; }
+      if (pwEl && pwEl.value !== $('#pfPw2').value) { $('#perr').textContent = errText('PW_MISMATCH'); $('#pfPw2').focus(); return; }
       const body = { name: $('#pfName').value, username: uname };
       if (avatarId) body.avatar_file = avatarId;
       try {
@@ -192,15 +195,18 @@ const App = {
         <div><h2 style="margin:0 0 4px;font-size:19px">${t('new_password_title')}</h2><div class="mut small">${t('new_password_hint', { u: '@' + (S.me.username || '') })}</div></div>
         <input type="text" autocomplete="username" value="${esc(S.me.username || '')}" hidden>
         <div class="pw"><input class="input" id="np" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('password_ph')}"><button type="button" class="ibtn eye" id="npEye">${icon('eye')}</button></div>
+        <div class="pw"><input class="input" id="np2" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('confirm_password_ph')}"><button type="button" class="ibtn eye" id="npEye2">${icon('eye')}</button></div>
         <div class="err" id="perr"></div>
         <button class="btn block">${t('save')}</button>
       </form></div>`;
     $('#np').focus();
     $('#npEye').onclick = () => { const p = $('#np'); p.type = p.type === 'password' ? 'text' : 'password'; };
+    $('#npEye2').onclick = () => { const p = $('#np2'); p.type = p.type === 'password' ? 'text' : 'password'; };
     $('#spf').onsubmit = async (e) => {
       e.preventDefault();
       const v = $('#np').value;
       if (v.length < 8) { $('#perr').textContent = errText('BAD_PASSWORD'); return; }
+      if (v !== $('#np2').value) { $('#perr').textContent = errText('PW_MISMATCH'); $('#np2').focus(); return; }
       try { const r = await API.post('/api/me/password', { password: v }); S.me = putUser(r.user); this.start(); }
       catch (err) { $('#perr').textContent = errText(err.code); }
     };
@@ -789,12 +795,14 @@ const Settings = {
       <div class="body">
         ${has ? `<input class="input" id="cpOld" type="password" dir="ltr" autocomplete="current-password" placeholder="${t('current_password')}">` : ''}
         <input class="input" id="cpNew" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('password_ph')}">
+        <input class="input" id="cpNew2" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('confirm_password_ph')}">
         <span class="mut small">${t('password_hint')}</span>
         <div class="err" id="cpE"></div></div>
       <footer><button class="btn ghost" data-close>${t('cancel')}</button><button class="btn" id="cpGo">${t('save')}</button></footer>`);
     $('#cpGo', m.el).onclick = async () => {
       const nv = $('#cpNew', m.el).value;
       if (nv.length < 8) { $('#cpE', m.el).textContent = errText('BAD_PASSWORD'); return; }
+      if (nv !== $('#cpNew2', m.el).value) { $('#cpE', m.el).textContent = errText('PW_MISMATCH'); return; }
       try {
         const r = await API.post('/api/me/password', { password: nv, current_password: has ? $('#cpOld', m.el).value : undefined });
         S.me = putUser(r.user); m.close(); toast(t('done')); this.render();
