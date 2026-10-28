@@ -32,7 +32,7 @@ const App = {
         <button class="chip ${LANG === 'en' ? 'on' : ''}" data-l="en">English</button>
       </div>
       <div class="auth"><form class="auth-card glass" id="authForm" novalidate>
-        <div class="brand"><div class="logo">${LOGO}</div><div><h1>Connection</h1><span class="by">by Satingraphic</span><p>${t('app_tag')}</p></div></div>
+        <div class="brand wmb">${WORDMARK}<p>${t('app_tag')}</p></div>
         <div id="authStep"></div>
       </form></div>`;
     $$('.auth-top .chip').forEach((b) => b.onclick = () => { setLang(b.dataset.l); this.showAuth(); });
@@ -191,7 +191,7 @@ const App = {
     const root = $('#root');
     root.innerHTML = `
       <div class="auth"><form class="auth-card glass" id="spf" novalidate>
-        <div class="brand"><div class="logo">${LOGO}</div><div><h1>Connection</h1><span class="by">by Satingraphic</span></div></div>
+        <div class="brand wmb">${WORDMARK}</div>
         <div><h2 style="margin:0 0 4px;font-size:19px">${t('new_password_title')}</h2><div class="mut small">${t('new_password_hint', { u: '@' + (S.me.username || '') })}</div></div>
         <input type="text" autocomplete="username" value="${esc(S.me.username || '')}" hidden>
         <div class="pw"><input class="input" id="np" type="password" dir="ltr" autocomplete="new-password" placeholder="${t('password_ph')}"><button type="button" class="ibtn eye" id="npEye">${icon('eye')}</button></div>
@@ -217,8 +217,8 @@ const App = {
     const root = $('#root');
     root.innerHTML = `
       <div class="app" id="app">
-        <nav class="rail glass" aria-label="Connection">
-          <div class="logo" title="Connection by Satingraphic">${LOGO}</div>
+        <nav class="rail glass" aria-label="Satin Connect">
+          <div class="logo" title="Satin Connect by Satin graphic">${LOGO}</div>
           <button class="ibtn" data-tab="chats" title="${t('chats')}">${icon('chat')}<span class="badge" id="railBadge" hidden></span></button>
           <button class="ibtn" data-tab="calls" title="${t('calls')}">${icon('phone')}</button>
           <button class="ibtn" data-tab="settings" title="${t('settings')}">${icon('settings')}</button>
@@ -290,7 +290,7 @@ const App = {
       const el = $('#' + id); if (!el) continue;
       el.hidden = !n; el.textContent = n > 99 ? '99+' : fmt.num(n);
     }
-    document.title = (n ? `(${n}) ` : '') + 'Connection';
+    document.title = (n ? `(${n}) ` : '') + 'Satin Connect';
     if (navigator.setAppBadge) { try { n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } catch {} }
   },
 
@@ -324,7 +324,7 @@ const App = {
     if (!$('#chatList', panel)) {
       const hasArchived = [...S.chats.values()].some((c) => c.archived);
       panel.innerHTML = `
-        <div class="ph"><div class="brandline"><h2>Connection</h2><small>by Satingraphic</small></div>
+        <div class="ph"><div class="brandline" aria-label="Satin Connect">${WORDMARK}</div>
           <button class="ibtn" id="newBtnTop" title="${t('new_chat')}">${icon('edit')}</button></div>
         <div class="search">${icon('search')}<input class="input" id="q" type="search" placeholder="${t('search_ph')}" value="${esc(S.query)}" autocomplete="off"></div>
         <div class="filters" id="filters">
@@ -439,7 +439,7 @@ const App = {
 function deviceName() {
   const ua = navigator.userAgent;
   const os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iOS' : /Windows/i.test(ua) ? 'Windows' : /Mac/i.test(ua) ? 'macOS' : /Linux/i.test(ua) ? 'Linux' : '';
-  const br = /SChatAndroid/.test(ua) ? 'Connection app' : /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+  const br = /SChatAndroid/.test(ua) ? 'Satin Connect app' : /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
   return `${br}${os ? ' · ' + os : ''}`;
 }
 
@@ -746,7 +746,7 @@ const Settings = {
         </div>
         <div class="sec"><h4>${t('devices')}</h4><div id="sSess"><div class="li"><span class="spinner"></span></div></div></div>
         <div class="sec"><button class="li danger" id="sOut">${icon('logout')}<span class="k">${t('logout')}</span></button></div>
-        <div class="mut small" style="text-align:center;padding:10px">Connection by Satingraphic · ${t('version')} 1.1</div>
+        <div class="mut small" style="text-align:center;padding:10px">Satin Connect by Satin graphic · ${t('version')} 1.1</div>
       </div>`;
     $('#sAv').onchange = async (e) => {
       const f = e.target.files[0]; if (!f) return;

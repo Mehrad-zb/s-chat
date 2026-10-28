@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Connection · تنظیمات سرور</title>
+<title>Satin Connect · تنظیمات سرور</title>
 <link rel="stylesheet" href="/app.css?v=1">
 <style>
   body{overflow:auto}
@@ -20,7 +20,8 @@
 </head>
 <body>
 <div class="wrap"><form class="card glass" id="f" autocomplete="off">
-  <div class="brand"><div class="logo"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M40.5 22.5a13 13 0 1 0 0 19" fill="none" stroke="currentColor" stroke-width="6.5" stroke-linecap="round"/><circle cx="43.5" cy="32" r="3.4" fill="currentColor"/></svg></div><div><h1>تنظیمات سرور</h1><p>فقط برای مدیر — این لینک را به کسی ندهید</p></div></div>
+  <div class="brand" style="display:block;text-align:center"><img src="/icons/icon-192.png" alt="Satin Connect" width="64" height="64" style="border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.15)"></div>
+  <div style="text-align:center"><h1 style="margin:8px 0 2px;font-size:20px">تنظیمات سرور</h1><p style="margin:0">فقط برای مدیر — این لینک را به کسی ندهید</p></div>
   <div class="err" id="msg"></div>
 
   <h2>📧 ایمیل (ارسال کد ورود)</h2>
@@ -28,7 +29,7 @@
   <div class="row2"><input class="input" name="SMTP_HOST" placeholder="SMTP host" dir="ltr"><input class="input" name="SMTP_PORT" placeholder="465" dir="ltr"></div>
   <input class="input" name="SMTP_USER" placeholder="Email / username" dir="ltr">
   <input class="input" name="SMTP_PASS" type="password" placeholder="Password" dir="ltr">
-  <input class="input" name="SMTP_FROM" placeholder="Connection <noreply@satingraphic.ca>" dir="ltr">
+  <input class="input" name="SMTP_FROM" placeholder="Satin Connect <noreply@satingraphic.ca>" dir="ltr">
   <div class="test"><input class="input" id="tEmail" placeholder="ایمیل برای تست" dir="ltr"><button type="button" class="btn ghost" id="bEmail">ارسال تست</button></div>
 
   <h2>💬 پیامک VoIP.ms (اختیاری — فقط شماره‌های کانادا/آمریکا)</h2>
@@ -39,7 +40,7 @@
   <div class="test"><input class="input" id="tSms" placeholder="شماره برای تست" dir="ltr"><button type="button" class="btn ghost" id="bSms">ارسال تست</button></div>
 
   <button class="btn block">ذخیره</button>
-  <a href="/" class="btn ghost block" style="text-decoration:none">رفتن به Connection</a>
+  <a href="/" class="btn ghost block" style="text-decoration:none">رفتن به Satin Connect</a>
 </form></div>
 <script>
 const tok = location.hash.slice(1);

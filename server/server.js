@@ -25,7 +25,7 @@ const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
 const PUBLIC_DIR = path.resolve(cfg.PUBLIC_DIR || path.join(__dirname, '..', 'public'));
 const MAX_UPLOAD = parseInt(cfg.MAX_UPLOAD_MB || '200', 10) * 1024 * 1024;
 const DEV = cfg.DEV_MODE === '1';
-const APP_NAME = cfg.APP_NAME && cfg.APP_NAME !== 'S-Chat' ? cfg.APP_NAME : 'Connection';
+const APP_NAME = cfg.APP_NAME && !['S-Chat', 'Connection'].includes(cfg.APP_NAME) ? cfg.APP_NAME : 'Satin Connect';
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const db = open(DATA_DIR);
@@ -1055,7 +1055,7 @@ route('POST', '/api/setup/test', async ({ req, body }) => {
   const c = conf();
   try {
     if (body.kind === 'sms') await sendSms(c, { to: String(body.to || ''), message: `${APP_NAME}: test ✓` });
-    else await sendEmail(c, { to: String(body.to || ''), subject: `${APP_NAME} test`, text: 'Connection email works ✓', html: '<p>Connection email works ✓</p>' });
+    else await sendEmail(c, { to: String(body.to || ''), subject: `${APP_NAME} test`, text: 'Satin Connect email works ✓', html: '<p>Satin Connect email works ✓</p>' });
     return { ok: true };
   } catch (e) { return { ok: false, error: e.message }; }
 }, { auth: false });

@@ -12,7 +12,7 @@ const Chat = {
 
   renderEmpty() {
     const p = $('#chatPanel'); if (!p) return;
-    p.innerHTML = `<div class="empty"><div class="big">${icon('chat')}</div><b>Connection</b><span class="small" style="margin-top:-8px">by Satingraphic</span><span class="small">${t('no_chats_hint')}</span></div>`;
+    p.innerHTML = `<div class="empty"><div class="big">${icon('chat')}</div><div class="wm-empty">${WORDMARK}</div><span class="small">${t('no_chats_hint')}</span></div>`;
     this.els = null;
   },
 

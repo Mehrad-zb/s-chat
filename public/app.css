@@ -554,3 +554,15 @@ html:not([data-skin="glass"]) .info .hero .av{box-shadow:0 0 0 4px var(--g-bg),0
 .rec .lv{min-width:0;flex:1 1 0;justify-content:flex-end}
 .rec .rt{flex:none}
 .cbar > .ibtn{flex:none}
+
+/* ---------- Satin Connect brand ---------- */
+.logo{background:#fff !important;color:#0b0b0b !important;border-radius:16px !important;box-shadow:0 1px 3px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.04)}
+.logo svg.mk{width:78%;height:auto}
+.rail .logo{border-radius:13px !important}
+svg.wm{display:block;width:100%;height:auto;color:var(--ink,#111)}
+.brand.wmb{display:grid;justify-items:center;gap:10px;text-align:center}
+.brand.wmb svg.wm{width:min(280px,82%)}
+.brand.wmb p{margin:0}
+.ph .brandline svg.wm{height:36px;width:auto;max-width:100%}
+.wm-empty{width:min(230px,70%);margin:2px auto 0}
+.wm-empty svg.wm{color:var(--ink,#111)}
