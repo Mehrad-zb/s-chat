@@ -78,10 +78,10 @@ RT.on('message', async (m) => {
   if (msg.sender_id) { const map = S.typing.get(msg.chat_id); if (map) map.delete(msg.sender_id); }
   if (!mine && msg.kind !== 'system') {
     RT.send({ t: 'delivered', chat_id: msg.chat_id, upto: msg.id });
-    const visible = isOpen && !document.hidden;
+    const visible = isOpen && !isHidden();
     if (!visible || !Chat.nearBottom(300)) {
       if (!fresh) c.unread = (c.unread || 0) + 1;
-      if (!c.muted && (!visible || !isOpen)) Sound.msg();
+      if (!c.muted && (!visible || !isOpen) && !window.__nativeHidden) Sound.msg(); // in the Android app the system notification makes the sound
     }
     if (c.archived && !c.muted) c.archived = false;
   }
@@ -152,14 +152,24 @@ RT.on('chat', (m) => {
 RT.on('chat:removed', (m) => Chat.removeChat(m.chat_id));
 
 // ---------------- page lifecycle ----------------
-document.addEventListener('visibilitychange', () => {
+function onVisibility() {
   if (!API.token) return;
-  RT.send({ t: 'focus', chat_id: document.hidden ? null : S.cur });
-  if (!document.hidden) {
+  RT.send({ t: 'focus', chat_id: isHidden() ? null : S.cur });
+  if (!isHidden()) {
     if (!RT.ws || RT.ws.readyState > 1) RT.connect();
     Chat.markRead();
   }
-});
+}
+document.addEventListener('visibilitychange', onVisibility);
+// Android app: told when the app goes to / comes back from the background, and asked to handle the Back button
+window.__nativeVisible = (v) => { window.__nativeHidden = !v; onVisibility(); if (v && Sound.ctx) Sound.ctx.resume().catch(() => {}); };
+window.__nativeBack = () => {
+  const ov = document.querySelectorAll('.ov'); const top = ov[ov.length - 1];
+  if (top) { const x = top.querySelector('[data-close]'); if (x) { x.click(); return true; } top.remove(); return true; }
+  const v = document.querySelector('.viewer'); if (v) { const x = v.querySelector('[data-close],.x,.close'); if (x) x.click(); else v.remove(); return true; }
+  if (Info.el) { Info.close(); return true; }
+  return false;
+};
 window.addEventListener('online', () => { if (API.token && (!RT.ws || RT.ws.readyState > 1)) RT.connect(); App.connState(); });
 window.addEventListener('offline', () => App.connState());
 window.addEventListener('popstate', () => { if (S.cur && window.innerWidth <= 820) Chat.close(); });

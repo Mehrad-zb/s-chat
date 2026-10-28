@@ -42,6 +42,7 @@ const Call = {
     this.cur = { id: m.call_id, chatId: m.chat_id, peer, video: m.video, outgoing: false, state: 'incoming', polite: true, pendingIce: [] };
     RT.send({ t: 'call:ringing', call_id: m.call_id });
     this.showOverlay();
+    if (window.__answer && window.__answer === m.call_id) { window.__answer = null; setTimeout(() => this.accept(), 250); return; }
     Sound.startRing('incoming');
     if (document.hidden && 'Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) {
       navigator.serviceWorker.ready.then((reg) => reg.showNotification(peer.name, { body: m.video ? t('incoming_video') : t('incoming_call'), tag: 'call-' + m.call_id, renotify: true, requireInteraction: true, icon: '/icons/icon-192.png?v=2', data: { chat_id: m.chat_id } })).catch(() => {});
@@ -87,6 +88,7 @@ const Call = {
       if (st === 'connected') {
         if (!c.startedAt) { c.startedAt = Date.now(); this.startTimer(); }
         c.state = 'connected'; clearTimeout(c.failTimer);
+        try { if (window.SatinNative) window.SatinNative.inCall(true, !!c.video); } catch {}
       } else if (st === 'disconnected') {
         c.state = 'reconnecting';
         c.failTimer = setTimeout(() => { if (pc.connectionState !== 'connected') { try { pc.restartIce(); } catch {} } }, 2500);
@@ -150,6 +152,7 @@ const Call = {
   },
 
   cleanup() {
+    try { if (window.SatinNative) window.SatinNative.inCall(false, false); } catch {}
     const c = this.cur; if (!c) return;
     Sound.stopRing();
     clearInterval(c.timer); clearTimeout(c.failTimer); clearTimeout(c.dropTimer);

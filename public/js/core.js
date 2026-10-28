@@ -153,9 +153,20 @@ const fmt = {
 };
 
 // ---------- API ----------
+// bridge to the Android app (ringing calls + notifications run in a native background service)
+const Native = {
+  on: !!window.SatinNative,
+  session(tok) { try { if (window.SatinNative) tok ? window.SatinNative.setSession(tok) : window.SatinNative.clearSession(); } catch {} },
+};
+const isHidden = () => document.hidden || !!window.__nativeHidden;
+window.__answer = new URLSearchParams(location.search).get('answer') || null;
+
 const API = {
   token: (() => { try { return localStorage.getItem('sc_token'); } catch { return null; } })(),
-  setToken(tok) { this.token = tok; try { tok ? localStorage.setItem('sc_token', tok) : localStorage.removeItem('sc_token'); } catch {} },
+  setToken(tok) {
+    this.token = tok; try { tok ? localStorage.setItem('sc_token', tok) : localStorage.removeItem('sc_token'); } catch {}
+    Native.session(tok);
+  },
   async req(method, path, body) {
     let r;
     try {
@@ -365,7 +376,7 @@ const RT = {
     ws.onopen = () => {
       this.retry = 0; S.wsUp = true; App.connState();
       for (const m of this.queue.splice(0)) ws.send(JSON.stringify(m));
-      if (S.cur) this.send({ t: 'focus', chat_id: document.hidden ? null : S.cur });
+      if (S.cur) this.send({ t: 'focus', chat_id: isHidden() ? null : S.cur });
     };
     ws.onmessage = (e) => {
       let m; try { m = JSON.parse(e.data); } catch { return; }

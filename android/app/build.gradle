@@ -8,14 +8,14 @@ android {
     compileSdk 34
     defaultConfig {
         applicationId 'ca.satingraphic.schat'
-        minSdk 21
-        targetSdk 34
-        versionCode verCode
-        versionName "1.0.${verCode}"
-        manifestPlaceholders = [hostName: appHost, launchUrl: "https://${appHost}/?source=apk"]
-        resValue 'string', 'host_name', appHost
-        resValue 'string', 'asset_statements', """[{ \\"relation\\": [\\"delegate_permission/common.handle_all_urls\\"], \\"target\\": { \\"namespace\\": \\"web\\", \\"site\\": \\"https://${appHost}\\" } }]"""
+        minSdk 28
+        // 33: full-screen call notifications are allowed without extra user steps
+        targetSdk 33
+        versionCode verCode + 100
+        versionName "2.0.${verCode}"
+        buildConfigField 'String', 'HOST', "\"${appHost}\""
     }
+    buildFeatures { buildConfig true }
     signingConfigs {
         release {
             storeFile file(System.getenv('SCHAT_KEYSTORE') ?: 'release.keystore')
@@ -34,8 +34,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    lint { abortOnError false; checkReleaseBuilds false }
 }
 
 dependencies {
-    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 }

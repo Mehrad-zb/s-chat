@@ -455,7 +455,7 @@ const Chat = {
 
   // ---------------- read state ----------------
   markRead() {
-    const id = S.cur; if (!id || document.hidden || !this.els) return;
+    const id = S.cur; if (!id || isHidden() || !this.els) return;
     if (!this.nearBottom(300)) return;
     const store = S.msgs.get(id); if (!store) return;
     const last = [...store.list].reverse().find((m) => typeof m.id === 'number');

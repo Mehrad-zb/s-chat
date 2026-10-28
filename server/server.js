@@ -248,7 +248,13 @@ function chatOut(chatId, userId) {
 // ---------- realtime ----------
 const sockets = new Map(); // userId -> Set<WSConn>
 function isOnline(uid) { const s = sockets.get(uid); return !!(s && s.size); }
-function emitTo(uid, evt) { const set = sockets.get(uid); if (set) for (const c of set) c.send(evt); }
+function emitTo(uid, evt) {
+  const set = sockets.get(uid); if (set) for (const c of set) c.send(evt);
+  if (evt.t === 'call:invite' || evt.t === 'call:end') emitBg(uid, evt);
+}
+// background connections from the Android app's service (they only get calls + notifications, and don't count as "online")
+const bgSockets = new Map(); // uid -> Set(conn)
+function emitBg(uid, evt) { const set = bgSockets.get(uid); if (set) for (const c of set) c.send(evt); }
 function emitChat(chatId, evt, exceptUser) { for (const uid of chatMembers(chatId)) if (uid !== exceptUser) emitTo(uid, evt); }
 function contactsOf(uid) {
   return q(`SELECT DISTINCT m2.user_id FROM members m1 JOIN members m2 ON m1.chat_id = m2.chat_id
@@ -376,6 +382,7 @@ function notifyOffline(chatId, senderId, out) {
     const body = (chat.type === 'group' && sender ? sender.name + ': ' : '') + previewText(out);
     const icon = chat.type === 'group' ? fileUrl(chat.avatar_file) : (sender ? fileUrl(sender.avatar_file) : null);
     pusher.sendToUser(m.user_id, { type: 'message', chat_id: chatId, title, body: body.slice(0, 180), icon, tag: 'chat-' + chatId }, { topic: 'chat' + chatId }).catch(() => {});
+    emitBg(m.user_id, { t: 'notify', kind: 'message', chat_id: chatId, msg_id: out.id, title, body: body.slice(0, 300), group: chat.type === 'group' });
   }
 }
 
@@ -400,6 +407,7 @@ function endCall(callId, reason, byUser) {
   insertMessage(c.chatId, c.from, { kind: 'call', text: '', meta: { video: c.video, duration, status, to: c.to } });
   if (status === 'missed' || status === 'cancelled') {
     const caller = getUser(c.from);
+    emitBg(c.to, { t: 'notify', kind: 'missed-call', chat_id: c.chatId, title: caller ? caller.name : APP_NAME, body: c.video ? 'Missed video call · تماس تصویری از دست رفته' : 'Missed call · تماس از دست رفته' });
     pusher.sendToUser(c.to, { type: 'missed-call', chat_id: c.chatId, title: caller ? caller.name : APP_NAME, body: c.video ? '📹 تماس تصویری از دست رفته' : '📞 تماس از دست رفته', tag: 'call-' + callId }).catch(() => {});
   }
 }
@@ -427,6 +435,7 @@ function handleWs(conn, req, url) {
   if (!s) { conn.send({ t: 'auth-error' }); conn.close(4001); return; }
   const uid = s.user_id;
   hub.track(conn);
+  if (url && url.searchParams.get('bg') === '1') return handleBgWs(conn, uid);
   let set = sockets.get(uid);
   const wasOnline = !!(set && set.size);
   if (!set) { set = new Set(); sockets.set(uid, set); }
@@ -457,6 +466,25 @@ function handleWs(conn, req, url) {
       if (cid) setTimeout(() => { if (!isOnline(uid) && calls.has(cid)) endCall(cid, 'disconnect', uid); }, 20000);
     }
   });
+}
+
+function handleBgWs(conn, uid) {
+  let set = bgSockets.get(uid);
+  if (!set) { set = new Set(); bgSockets.set(uid, set); }
+  set.add(conn);
+  conn.send({ t: 'hello', user_id: uid, bg: true });
+  const ringing = userCall.get(uid);
+  if (ringing) {
+    const c = calls.get(ringing);
+    if (c && c.to === uid && !c.startedAt) conn.send({ t: 'call:invite', call_id: c.id, chat_id: c.chatId, from: publicUser(getUser(c.from), uid), video: c.video });
+  }
+  conn.on('message', (raw) => {
+    let m; try { m = JSON.parse(raw); } catch { return; }
+    if (m.t === 'ping') conn.send({ t: 'pong' });
+    else if (m.t === 'call:reject') { const c = calls.get(m.call_id); if (c && c.to === uid) endCall(c.id, 'reject', uid); }
+    else if (m.t === 'call:ringing') { const c = calls.get(m.call_id); if (c && c.to === uid) emitTo(c.from, { t: 'call:ringing', call_id: c.id, from: uid }); }
+  });
+  conn.on('close', () => { set.delete(conn); if (!set.size) bgSockets.delete(uid); });
 }
 
 function onWsMessage(uid, conn, m) {
@@ -512,6 +540,7 @@ function onWsMessage(uid, conn, m) {
         c.startedAt = now(); clearTimeout(c.timer); clearInterval(c.ringTimer);
         // tell the callee's other devices to stop ringing
         for (const other of sockets.get(uid) || []) if (other !== conn) other.send({ t: 'call:end', call_id: c.id, reason: 'answered-elsewhere' });
+        emitBg(uid, { t: 'call:end', call_id: c.id, reason: 'answered-elsewhere' });
         c.calleeConn = conn;
       }
       const payload = { t: m.t, call_id: c.id, from: uid, data: m.data };
@@ -660,6 +689,13 @@ route('POST', '/api/push/subscribe', async ({ s, body }) => {
 route('POST', '/api/push/test', async ({ s }) => {
   const results = await pusher.sendToUser(s.user_id, { type: 'test', title: APP_NAME, body: 'نوتیفیکیشن فعال است ✅ / Notifications work', tag: 'test' });
   return { ok: results.some((r) => r.status >= 200 && r.status < 300), results };
+});
+
+// decline a ringing call from the Android app's notification
+route('POST', '/api/calls/:id/reject', async ({ s, params }) => {
+  const c = calls.get(String(params.id));
+  if (c && c.to === s.user_id && !c.startedAt) endCall(c.id, 'reject', s.user_id);
+  return { ok: true };
 });
 
 route('GET', '/api/turn', async ({ s, req }) => ({ ice: turnServers(s.user_id, req.headers['x-forwarded-host'] || req.headers.host) }));

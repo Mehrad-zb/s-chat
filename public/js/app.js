@@ -214,6 +214,7 @@ const App = {
 
   // ---------------- main shell ----------------
   start(offline) {
+    Native.session(API.token);
     const root = $('#root');
     root.innerHTML = `
       <div class="app" id="app">
@@ -740,7 +741,7 @@ const Settings = {
           <div class="li">${icon('globe')}<span class="k">${t('language')}</span>
             <span style="display:flex;gap:4px"><button class="chip ${LANG === 'fa' ? 'on' : ''}" data-lg="fa">فارسی</button><button class="chip ${LANG === 'en' ? 'on' : ''}" data-lg="en">English</button></span></div>
         </div>
-        <div class="sec"><h4>${t('install_app')}</h4>
+        <div class="sec"${Native.on ? ' hidden' : ''}><h4>${t('install_app')}</h4>
           <button class="li" id="sInstall">${icon('app')}<span class="k">${t('install_app')}<small>${/iPhone|iPad/.test(navigator.userAgent) ? t('ios_install') : t('install_hint')}</small></span></button>
           <a class="li" href="/download/s-chat.apk" download style="text-decoration:none">${icon('download')}<span class="k">${t('android_apk')}</span></a>
         </div>
@@ -760,8 +761,15 @@ const Settings = {
     $('#sSeen').onclick = async () => { try { const { user } = await API.patch('/api/me', { show_last_seen: !me.show_last_seen }); S.me = putUser(user); this.render(); } catch (err) { toast(errText(err.code)); } };
     $('#sSnd').onclick = (e) => { S.sounds = !S.sounds; try { localStorage.setItem('sc_sounds', S.sounds ? '1' : '0'); } catch {} e.currentTarget.classList.toggle('on', S.sounds); };
     const nb = $('#sNotif');
+    if (Native.on) {
+      // Android app: notifications/calls come from the app itself
+      $('#sNotifTxt').textContent = t('notif_on');
+      nb.textContent = t('settings'); nb.hidden = false;
+      nb.onclick = () => { try { window.SatinNative.openNotificationSettings(); } catch {} };
+    } else {
     nb.hidden = Push.state() === 'granted' || Push.state() === 'unsupported';
     nb.onclick = async () => { await Push.request(); $('#sNotifTxt').textContent = Push.statusText(); nb.hidden = Push.state() === 'granted'; };
+    }
     if (Push.state() === 'granted') {
       const tb = h(`<button class="btn ghost" style="min-height:36px;padding:6px 14px;font-size:13px">${t('test_notif')}</button>`);
       tb.onclick = async () => {
