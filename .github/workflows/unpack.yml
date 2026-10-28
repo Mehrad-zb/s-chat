@@ -11,23 +11,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Extract bootstrap.zip into the repo
+      - name: Extract bootstrap.zip / apply patches
         id: x
         run: |
-          [ -f bootstrap.zip ] || { echo "nothing to unpack"; exit 0; }
-          unzip -q -o bootstrap.zip -d /tmp/src
-          rsync -a /tmp/src/s-chat/ ./ --exclude .github
-          chmod +x deploy/*.sh
-          git rm -q bootstrap.zip
-          git rm -q --ignore-unmatch android.yml unpack.yml
           git config user.name "Mehrad"
           git config user.email "mehrad.tr@gmail.com"
+          changed=0
+          if [ -f bootstrap.zip ]; then
+            unzip -q -o bootstrap.zip -d /tmp/src
+            rsync -a /tmp/src/s-chat/ ./ --exclude .github
+            chmod +x deploy/*.sh
+            git rm -q bootstrap.zip
+            git rm -q --ignore-unmatch android.yml unpack.yml
+            changed=1
+          fi
+          for p in $(ls patches/*.patch 2>/dev/null | sort); do
+            git apply --whitespace=nowarn "$p"
+            git rm -q "$p"
+            changed=1
+          done
+          [ "$changed" = 1 ] || { echo "nothing to do"; exit 0; }
+          chmod +x deploy/*.sh
           git add -A
-          git commit -m "Add S-Chat source"
+          git commit -m "Apply uploaded update"
           git push
           echo "done=1" >> "$GITHUB_OUTPUT"
+          if git diff --name-only HEAD~1 HEAD | grep -q '^android/'; then echo "android=1" >> "$GITHUB_OUTPUT"; fi
       - name: Build the Android app
-        if: steps.x.outputs.done == '1'
+        if: steps.x.outputs.android == '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run android.yml --ref main
