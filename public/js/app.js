@@ -44,7 +44,7 @@ const App = {
     box.innerHTML = `
       <div style="display:grid;gap:14px">
         <div><h2 style="margin:0 0 4px;font-size:19px">${t('login_title')}</h2><div class="mut small">${t('login_hint')}</div></div>
-        <input class="input" id="tgt" type="text" inputmode="email" autocomplete="username" dir="ltr" placeholder="${t('login_ph')}" value="${esc(prefill)}" required>
+        <input class="input" id="tgt" type="text" inputmode="email" autocomplete="username" dir="ltr" placeholder="${S.config.sms ? t('login_ph') : t('email')}" value="${esc(prefill)}" required>
         <div class="err" id="aerr"></div>
         <button class="btn block" id="go">${t('send_code')}</button>
       </div>`;

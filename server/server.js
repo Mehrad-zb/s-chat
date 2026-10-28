@@ -35,7 +35,7 @@ const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 const q = (sql) => db.prepare(sql);
 
 // Settings editable from the /setup page (stored in the DB, override .env)
-const SETTING_KEYS = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'VOIPMS_USER', 'VOIPMS_API_PASS', 'VOIPMS_DID'];
+const SETTING_KEYS = ['MAIL_RELAY_URL', 'MAIL_RELAY_TOKEN', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'VOIPMS_USER', 'VOIPMS_API_PASS', 'VOIPMS_DID'];
 function dbSettings() { const r = db.prepare("SELECT v FROM kv WHERE k='settings'").get(); return r ? JSON.parse(r.v) : {}; }
 function conf() { return { ...cfg, ...Object.fromEntries(Object.entries(dbSettings()).filter(([, v]) => v !== '' && v != null)) }; }
 
@@ -262,6 +262,8 @@ function clientIp(req) {
 
 async function startOtp(target, req) {
   rateLimit('otp-ip:' + clientIp(req), 10, 3600000);
+  const c0 = conf();
+  if (!DEV && target.kind === 'phone' && !(c0.VOIPMS_USER && c0.VOIPMS_API_PASS && c0.VOIPMS_DID)) fail(400, 'SMS_DISABLED');
   const existing = q('SELECT * FROM otps WHERE target = ?').get(target.value);
   if (existing && now() - existing.sent_at < 55000) fail(429, 'WAIT');
   const code = String(crypto.randomInt(100000, 1000000));
@@ -516,7 +518,7 @@ route('GET', '/api/config', async () => ({
   name: APP_NAME,
   vapid: pusher.publicKey,
   sms: !!(conf().VOIPMS_USER && conf().VOIPMS_API_PASS && conf().VOIPMS_DID),
-  email: !!conf().SMTP_HOST,
+  email: !!(conf().SMTP_HOST || conf().MAIL_RELAY_URL),
   dev: DEV,
   max_upload: MAX_UPLOAD,
 }), { auth: false });

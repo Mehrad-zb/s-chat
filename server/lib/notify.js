@@ -50,7 +50,25 @@ function encodeHeader(s) {
   return /^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${Buffer.from(s).toString('base64')}?=`;
 }
 
-async function sendEmail(cfg, { to, subject, text, html }) {
+// HTTPS mail relay (a small PHP script on regular web hosting) — used because many
+// cloud providers (DigitalOcean included) block outgoing SMTP ports on new servers.
+async function sendViaRelay(cfg, { to, subject, text, html }) {
+  const r = await fetch(cfg.MAIL_RELAY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: cfg.MAIL_RELAY_TOKEN || '', to, subject, text, html, from: cfg.SMTP_FROM || '' }),
+    signal: AbortSignal.timeout(20000),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.ok) throw new Error('Mail relay: ' + (j.error || r.status));
+}
+
+async function sendEmail(cfg, msg) {
+  if (cfg.MAIL_RELAY_URL) return sendViaRelay(cfg, msg);
+  return sendSmtp(cfg, msg);
+}
+
+async function sendSmtp(cfg, { to, subject, text, html }) {
   if (!cfg.SMTP_HOST) throw new Error('SMTP is not configured');
   const port = parseInt(cfg.SMTP_PORT || '465', 10);
   const host = cfg.SMTP_HOST;
@@ -59,8 +77,8 @@ async function sendEmail(cfg, { to, subject, text, html }) {
     const s = secure
       ? tls.connect({ host, port, servername: host }, () => res(s))
       : net.connect({ host, port }, () => res(s));
-    s.setTimeout(20000, () => { s.destroy(new Error('SMTP timeout')); });
-    s.once('error', rej);
+    s.setTimeout(15000, () => { s.destroy(new Error('SMTP timeout (port ' + port + ' blocked?)')); });
+    s.once('error', (e) => rej(new Error(e.message || e.code || (e.errors && e.errors[0] && e.errors[0].code) || 'SMTP connection failed')));
   });
   let s = smtpSession(sock);
   const me = os.hostname() || 's-chat';

@@ -106,6 +106,8 @@ curl -fsSL -o $DIR/data/download/s-chat.apk.tmp "\$(grep ^APK_URL= $DIR/.env | c
 EOF
 chmod +x /etc/cron.daily/s-chat-apk; /etc/cron.daily/s-chat-apk || true
 
+echo "*/10 * * * * root bash $DIR/deploy/auto-update.sh >> /var/log/s-chat-update.log 2>&1" > /etc/cron.d/s-chat-update
+
 say "Done!  Open https://$DOMAIN"
 echo "Server settings page (email/SMS):  https://$DOMAIN/setup.html#$SETUP_TOKEN"
 echo "Update later with:   cd $DIR && bash deploy/update.sh"
